@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Manager - Class & Entity Diagram</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#232733;--border:#2e3345;--text:#e2e8f0;--text-muted:#8892a8;--accent:#6366f1;--accent-light:#818cf8;--green:#22c55e;--blue:#3b82f6;--cyan:#06b6d4;--orange:#f59e0b;--red:#ef4444;--purple:#a855f7;--pink:#ec4899;--teal:#14b8a6;--yellow:#eab308;--shadow:0 4px 24px rgba(0,0,0,0.4)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(15,17,23,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 2rem}
+nav .ni{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:2rem;height:60px}
+nav .logo{font-weight:800;font-size:1.1rem;background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+nav .nl{display:flex;gap:.25rem;overflow-x:auto}
+nav .nl a{color:var(--text-muted);text-decoration:none;font-size:.78rem;padding:.4rem .7rem;border-radius:6px;white-space:nowrap;transition:all .2s}
+nav .nl a:hover,nav .nl a.active{color:var(--text);background:var(--surface2)}
+.page{max-width:1400px;margin:0 auto;padding:80px 2rem 4rem}
+.hero{text-align:center;padding:3rem 0 2rem}
+.hero h1{font-size:2.5rem;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,#fff 0%,var(--accent-light) 50%,var(--cyan) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+.hero p{color:var(--text-muted);font-size:1.05rem;max-width:600px;margin:0 auto}
+section{margin-bottom:4rem}
+section>h2{font-size:1.4rem;font-weight:700;margin-bottom:1.5rem;padding-bottom:.75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem}
+.badge{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;padding:.2rem .5rem;border-radius:4px;font-weight:600}
+.diagram-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;box-shadow:var(--shadow);overflow-x:auto;margin-bottom:1.5rem;position:relative}
+.diagram-box .tag{position:absolute;top:1rem;right:1rem;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);background:var(--surface2);padding:.2rem .6rem;border-radius:4px}
+
+/* ===== MODULE GRAPH ===== */
+.mod-graph{display:flex;flex-direction:column;gap:1rem;align-items:center;min-width:700px}
+.mod-row{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+.mod-node{padding:.7rem 1.2rem;border-radius:10px;border:2px solid;font-size:.78rem;font-weight:700;text-align:center;min-width:140px;transition:transform .2s,box-shadow .2s;cursor:default}
+.mod-node:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.mod-node .mod-sub{font-weight:400;font-size:.6rem;color:var(--text-muted);display:block;margin-top:.15rem}
+.mod-arrow{display:flex;flex-direction:column;align-items:center;gap:0}
+.mod-arrow .ma-pipe{width:2px;height:16px;background:linear-gradient(var(--border),rgba(99,102,241,.3))}
+.mod-arrow .ma-label{font-size:.55rem;color:var(--text-muted);background:var(--surface2);padding:.1rem .4rem;border-radius:3px}
+.mod-imports{font-size:.55rem;color:var(--text-muted);margin-top:.3rem;line-height:1.3}
+
+/* Module colors */
+.m-auth{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.35);color:var(--green)}
+.m-2fa{background:rgba(236,72,153,.08);border-color:rgba(236,72,153,.35);color:var(--pink)}
+.m-vault{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.35);color:var(--blue)}
+.m-share{background:rgba(6,182,212,.08);border-color:rgba(6,182,212,.35);color:var(--cyan)}
+.m-crypto{background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.35);color:var(--purple)}
+.m-common{background:rgba(255,255,255,.04);border-color:var(--border);color:var(--text)}
+.m-prisma{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.35);color:var(--red)}
+.m-cache{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.35);color:var(--orange)}
+
+/* ===== CLASS CARDS ===== */
+.class-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+.class-card{border-radius:12px;border:1px solid;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.class-card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.cc-head{padding:.6rem 1rem;font-size:.8rem;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.cc-head .cc-type{font-size:.55rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:.15rem .4rem;border-radius:3px;background:rgba(255,255,255,.1)}
+.cc-body{padding:.5rem 1rem .75rem}
+.cc-deps{font-size:.6rem;color:var(--text-muted);margin-bottom:.4rem;padding-bottom:.3rem;border-bottom:1px solid rgba(255,255,255,.05)}
+.cc-deps span{color:var(--accent-light)}
+.cc-section-title{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-top:.4rem;margin-bottom:.2rem}
+.cc-list{list-style:none}
+.cc-list li{font-size:.68rem;padding:.15rem 0;color:var(--text-muted);display:flex;align-items:baseline;gap:.3rem}
+.cc-list li::before{content:'';width:4px;height:4px;border-radius:50%;flex-shrink:0;margin-top:.3rem}
+.cc-list li .method-name{color:var(--text);font-family:'SF Mono',Monaco,Consolas,monospace;font-size:.63rem}
+.cc-list li .method-ret{color:var(--text-muted);font-size:.58rem;font-style:italic}
+
+/* Card type colors */
+.card-controller{border-color:rgba(6,182,212,.3)}
+.card-controller .cc-head{background:rgba(6,182,212,.1);color:var(--cyan)}
+.card-controller .cc-list li::before{background:var(--cyan)}
+
+.card-service{border-color:rgba(34,197,94,.3)}
+.card-service .cc-head{background:rgba(34,197,94,.1);color:var(--green)}
+.card-service .cc-list li::before{background:var(--green)}
+
+.card-entity{border-color:rgba(59,130,246,.3)}
+.card-entity .cc-head{background:rgba(59,130,246,.1);color:var(--blue)}
+.card-entity .cc-list li::before{background:var(--blue)}
+
+.card-enum{border-color:rgba(168,85,247,.3)}
+.card-enum .cc-head{background:rgba(168,85,247,.1);color:var(--purple)}
+.card-enum .cc-list li::before{background:var(--purple)}
+
+.card-dto{border-color:rgba(245,158,11,.3)}
+.card-dto .cc-head{background:rgba(245,158,11,.1);color:var(--orange)}
+.card-dto .cc-list li::before{background:var(--orange)}
+
+.card-gateway{border-color:rgba(236,72,153,.3)}
+.card-gateway .cc-head{background:rgba(236,72,153,.1);color:var(--pink)}
+.card-gateway .cc-list li::before{background:var(--pink)}
+
+/* Module section wrapper */
+.mod-section{border:1px solid;border-radius:14px;padding:1.5rem 1.25rem;position:relative;margin-bottom:1.5rem}
+.mod-section .ms-label{position:absolute;top:-.55rem;left:1.25rem;padding:0 .5rem;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+
+/* ===== ENTITY ER ===== */
+.er-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
+.entity-card{border-radius:12px;border:1px solid rgba(59,130,246,.3);overflow:hidden;transition:transform .2s,box-shadow .2s}
+.entity-card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.entity-head{padding:.5rem 1rem;background:rgba(59,130,246,.1);color:var(--blue);font-weight:700;font-size:.8rem;display:flex;justify-content:space-between;align-items:center}
+.entity-head .e-tag{font-size:.5rem;padding:.1rem .4rem;border-radius:3px;background:rgba(59,130,246,.2);text-transform:uppercase;letter-spacing:.06em}
+.entity-body{padding:.4rem 0}
+.field-row{display:flex;align-items:center;padding:.2rem 1rem;font-size:.68rem;gap:.5rem;transition:background .15s}
+.field-row:hover{background:rgba(255,255,255,.03)}
+.field-row:nth-child(even){background:rgba(255,255,255,.015)}
+.field-name{font-family:'SF Mono',Monaco,Consolas,monospace;color:var(--text);min-width:110px}
+.field-type{color:var(--text-muted);font-size:.62rem;flex:1}
+.field-badge{font-size:.48rem;font-weight:700;padding:.1rem .3rem;border-radius:3px;text-transform:uppercase;letter-spacing:.05em}
+.fb-pk{background:rgba(234,179,8,.15);color:var(--yellow);border:1px solid rgba(234,179,8,.3)}
+.fb-fk{background:rgba(168,85,247,.15);color:var(--purple);border:1px solid rgba(168,85,247,.3)}
+.fb-uk{background:rgba(6,182,212,.15);color:var(--cyan);border:1px solid rgba(6,182,212,.3)}
+.fb-enum{background:rgba(236,72,153,.15);color:var(--pink);border:1px solid rgba(236,72,153,.3)}
+
+/* Relationships */
+.rel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.5rem;margin-top:1rem}
+.rel-item{display:flex;align-items:center;gap:.5rem;padding:.4rem .8rem;border-radius:6px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);font-size:.72rem;transition:background .15s}
+.rel-item:hover{background:rgba(99,102,241,.05)}
+.rel-from,.rel-to{font-weight:600;color:var(--blue)}
+.rel-arrow{color:var(--text-muted);font-family:'SF Mono',Monaco,Consolas,monospace;font-size:.65rem}
+
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:1rem;margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)}
+.legend-item{display:flex;align-items:center;gap:.4rem;font-size:.7rem;color:var(--text-muted)}
+.legend-dot{width:10px;height:10px;border-radius:3px}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+section{animation:fadeUp .5s ease-out}
+
+.back-top{position:fixed;bottom:2rem;right:2rem;width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:1.1rem;display:none;align-items:center;justify-content:center;box-shadow:var(--shadow);z-index:50;transition:transform .2s}
+.back-top:hover{transform:scale(1.1)}
+.back-top.show{display:flex}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="ni">
+    <div class="logo">BlackfishID Vault</div>
+    <div class="nl">
+      <a href="#modules" class="active">Modules</a>
+      <a href="#auth-mod">Auth</a>
+      <a href="#tfa-mod">2FA</a>
+      <a href="#vault-mod">Vault</a>
+      <a href="#share-mod">Sharing</a>
+      <a href="#crypto-mod">Crypto</a>
+      <a href="#entities">Entities</a>
+      <a href="#enums">Enums</a>
+      <a href="#dtos">DTOs</a>
+    </div>
+  </div>
+</nav>
+
+<button class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<div class="page">
+
+<div class="hero">
+  <h1>Class Diagram</h1>
+  <p>NestJS modules, services, controllers, entities, and DTOs of the Password Manager</p>
+</div>
+
+<!-- ============================================= -->
+<!-- 1. MODULE DEPENDENCY GRAPH -->
+<!-- ============================================= -->
+<section id="modules">
+<h2><span>Module Dependencies</span><span class="badge" style="background:rgba(99,102,241,.2);color:var(--accent-light)">NESTJS MODULES</span></h2>
+
+<div class="diagram-box">
+  <div class="tag">MODULE GRAPH</div>
+  <div class="mod-graph">
+
+    <!-- Row 1: AppModule -->
+    <div class="mod-node" style="background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.4);color:var(--accent-light);min-width:200px;">
+      📦 AppModule
+      <span class="mod-sub">Root Module</span>
+    </div>
+
+    <div class="mod-arrow">
+      <div class="ma-pipe"></div>
+      <div class="ma-label">imports</div>
+      <div class="ma-pipe"></div>
+    </div>
+
+    <!-- Row 2: Feature modules -->
+    <div class="mod-row">
+      <div class="mod-node m-auth">
+        🔒 AuthModule
+        <div class="mod-imports">→ CryptoModule, CacheModule, PrismaModule</div>
+      </div>
+      <div class="mod-node m-2fa">
+        🔢 TwoFactorModule
+        <div class="mod-imports">→ CryptoModule, CacheModule, PrismaModule</div>
+      </div>
+      <div class="mod-node m-vault">
+        📦 VaultModule
+        <div class="mod-imports">→ AuthModule, PrismaModule, CommonModule</div>
+      </div>
+      <div class="mod-node m-share">
+        🤝 SharingModule
+        <div class="mod-imports">→ VaultModule, CryptoModule, PrismaModule, CommonModule</div>
+      </div>
+    </div>
+
+    <div class="mod-arrow">
+      <div class="ma-pipe"></div>
+      <div class="ma-label">depends on</div>
+      <div class="ma-pipe"></div>
+    </div>
+
+    <!-- Row 3: Infrastructure modules -->
+    <div class="mod-row">
+      <div class="mod-node m-crypto">
+        🧮 CryptoModule
+        <span class="mod-sub">libsodium + AES + Argon2</span>
+      </div>
+      <div class="mod-node m-common">
+        📋 CommonModule
+        <div class="mod-imports">→ PrismaModule</div>
+      </div>
+      <div class="mod-node m-prisma">
+        🐘 PrismaModule
+        <span class="mod-sub">PostgreSQL ORM</span>
+      </div>
+      <div class="mod-node m-cache">
+        ⚡ CacheModule
+        <span class="mod-sub">Redis</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green);"></div> Auth</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--pink);"></div> 2FA</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--blue);"></div> Vault</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--cyan);"></div> Sharing</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--purple);"></div> Crypto</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red);"></div> Prisma/DB</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--orange);"></div> Cache/Redis</div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================= -->
+<!-- 2. AUTH MODULE CLASSES -->
+<!-- ============================================= -->
+<section id="auth-mod">
+<h2><span>AuthModule</span><span class="badge" style="background:rgba(34,197,94,.2);color:var(--green)">MODULE</span></h2>
+
+<div class="mod-section" style="border-color:rgba(34,197,94,.2);background:rgba(34,197,94,.015);">
+  <div class="ms-label" style="background:var(--bg);color:var(--green);">AuthModule</div>
+  <div class="class-grid">
+
+    <div class="class-card card-controller">
+      <div class="cc-head">AuthController<span class="cc-type">Controller</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>AuthService</span></div>
+        <div class="cc-section-title">Endpoints</div>
+        <ul class="cc-list">
+          <li><span class="method-name">register(dto)</span><span class="method-ret">→ RegisterResponseDto</span></li>
+          <li><span class="method-name">loginInit(dto)</span><span class="method-ret">→ {salt, B, kdfParams}</span></li>
+          <li><span class="method-name">loginVerify(dto)</span><span class="method-ret">→ {M2, tokens}</span></li>
+          <li><span class="method-name">refreshToken(dto)</span><span class="method-ret">→ TokenPairDto</span></li>
+          <li><span class="method-name">logout(userId)</span><span class="method-ret">→ void</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-service">
+      <div class="cc-head">AuthService<span class="cc-type">Service</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>SrpService, TotpService, WebAuthnService, DeviceTrustService, JwtService</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">register(dto)</span><span class="method-ret">→ RegisterResponse</span></li>
+          <li><span class="method-name">loginInit(email)</span><span class="method-ret">→ SrpStep1Result</span></li>
+          <li><span class="method-name">loginVerify(email, A, M1)</span><span class="method-ret">→ AuthResult</span></li>
+          <li><span class="method-name">generateTokenPair(user)</span><span class="method-ret">→ TokenPair</span></li>
+          <li><span class="method-name">refreshTokens(token)</span><span class="method-ret">→ TokenPair</span></li>
+          <li><span class="method-name">checkTwoFactorRequired(user)</span><span class="method-ret">→ boolean</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-service">
+      <div class="cc-head">SrpService<span class="cc-type">Service</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>Cache (Redis), tssrp6a</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">generateSalt()</span><span class="method-ret">→ Buffer</span></li>
+          <li><span class="method-name">computeVerifier(salt, id, pass)</span><span class="method-ret">→ Buffer</span></li>
+          <li><span class="method-name">initSession(user, salt, verifier)</span><span class="method-ret">→ SrpStep1</span></li>
+          <li><span class="method-name">verifySession(user, A, M1)</span><span class="method-ret">→ SrpStep2</span></li>
+          <li><span class="method-name">generateFakeChallenge(email)</span><span class="method-ret">→ SrpStep1</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-service">
+      <div class="cc-head">JwtStrategy<span class="cc-type">Guard</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>UserRepository</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">validate(payload)</span><span class="method-ret">→ User</span></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<!-- ============================================= -->
+<!-- 3. TWO FACTOR MODULE -->
+<!-- ============================================= -->
+<section id="tfa-mod">
+<h2><span>TwoFactorModule</span><span class="badge" style="background:rgba(236,72,153,.2);color:var(--pink)">MODULE</span></h2>
+
+<div class="mod-section" style="border-color:rgba(236,72,153,.2);background:rgba(236,72,153,.015);">
+  <div class="ms-label" style="background:var(--bg);color:var(--pink);">TwoFactorModule</div>
+  <div class="class-grid">
+
+    <div class="class-card card-controller">
+      <div class="cc-head">TotpController<span class="cc-type">Controller</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>TotpService</span></div>
+        <div class="cc-section-title">Endpoints</div>
+        <ul class="cc-list">
+          <li><span class="method-name">generateSecret(userId)</span><span class="method-ret">→ TotpSetupDto</span></li>
+          <li><span class="method-name">verify(userId, dto)</span><span class="method-ret">→ RecoveryCodes</span></li>
+          <li><span class="method-name">validate(userId, dto)</span><span class="method-ret">→ boolean</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-service">
+      <div class="cc-head">TotpService<span class="cc-type">Service</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>EncryptionService, UserRepo, TotpRepo</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">generateSecret(userId)</span><span class="method-ret">→ TotpSetup</span></li>
+          <li><span class="method-name">verifyAndEnable(userId, token)</span><span class="method-ret">→ string[]</span></li>
+          <li><span class="method-name">validateToken(userId, token)</span><span class="method-ret">→ boolean</span></li>
+          <li><span class="method-name">useRecoveryCode(userId, code)</span><span class="method-ret">→ boolean</span></li>
+          <li><span class="method-name">encryptSecret(secret)</span><span class="method-ret">→ EncPayload</span></li>
+          <li><span class="method-name">generateRecoveryCodes(userId, n)</span><span class="method-ret">→ string[]</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-controller">
+      <div class="cc-head">WebAuthnController<span class="cc-type">Controller</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>WebAuthnService</span></div>
+        <div class="cc-section-title">Endpoints</div>
+        <ul class="cc-list">
+          <li><span class="method-name">registrationOptions(userId)</span><span class="method-ret">→ CreationOptions</span></li>
+          <li><span class="method-name">registrationVerify(userId, resp)</span><span class="method-ret">→ Verified</span></li>
+          <li><span class="method-name">authenticationOptions(userId)</span><span class="method-ret">→ RequestOptions</span></li>
+          <li><span class="method-name">authenticationVerify(userId, resp)</span><span class="method-ret">→ Verified</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-service">
+      <div class="cc-head">WebAuthnService<span class="cc-type">Service</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>@simplewebauthn/server, CredentialRepo, Cache</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">generateRegistrationOptions(userId)</span></li>
+          <li><span class="method-name">verifyRegistration(userId, resp)</span></li>
+          <li><span class="method-name">generateAuthenticationOptions(userId)</span></li>
+          <li><span class="method-name">verifyAuthentication(userId, resp)</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-service">
+      <div class="cc-head">DeviceTrustService<span class="cc-type">Service</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>TrustedDeviceRepo</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">createTrustToken(userId, ua, ip)</span><span class="method-ret">→ string</span></li>
+          <li><span class="method-name">validateTrustToken(token)</span><span class="method-ret">→ Device | null</span></li>
+          <li><span class="method-name">revokeTrustToken(deviceId)</span><span class="method-ret">→ void</span></li>
+          <li><span class="method-name">listTrustedDevices(userId)</span><span class="method-ret">→ Device[]</span></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<!-- ============================================= -->
+<!-- 4. VAULT MODULE -->
+<!-- ============================================= -->
+<section id="vault-mod">
+<h2><span>VaultModule</span><span class="badge" style="background:rgba(59,130,246,.2);color:var(--blue)">MODULE</span></h2>
+
+<div class="mod-section" style="border-color:rgba(59,130,246,.2);background:rgba(59,130,246,.015);">
+  <div class="ms-label" style="background:var(--bg);color:var(--blue);">VaultModule</div>
+  <div class="class-grid">
+
+    <div class="class-card card-controller">
+      <div class="cc-head">VaultController<span class="cc-type">Controller</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>VaultService</span></div>
+        <div class="cc-section-title">Endpoints</div>
+        <ul class="cc-list">
+          <li><span class="method-name">create(userId, dto)</span><span class="method-ret">→ VaultDto</span></li>
+          <li><span class="method-name">findAll(userId)</span><span class="method-ret">→ VaultDto[]</span></li>
+          <li><span class="method-name">findOne(userId, vaultId)</span><span class="method-ret">→ VaultDto</span></li>
+          <li><span class="method-name">update(userId, vaultId, dto)</span><span class="method-ret">→ VaultDto</span></li>
+          <li><span class="method-name">delete(userId, vaultId)</span><span class="method-ret">→ void</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-service">
+      <div class="cc-head">VaultService<span class="cc-type">Service</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>VaultRepo, VaultMemberRepo, AuditService</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">create(userId, dto)</span><span class="method-ret">→ Vault</span></li>
+          <li><span class="method-name">findAllForUser(userId)</span><span class="method-ret">→ Vault[]</span></li>
+          <li><span class="method-name">findOne(userId, vaultId)</span><span class="method-ret">→ Vault</span></li>
+          <li><span class="method-name">update(userId, vaultId, dto)</span><span class="method-ret">→ Vault</span></li>
+          <li><span class="method-name">delete(userId, vaultId)</span><span class="method-ret">→ void</span></li>
+          <li><span class="method-name">checkAccess(userId, vaultId, role)</span><span class="method-ret">→ void</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-controller">
+      <div class="cc-head">VaultItemController<span class="cc-type">Controller</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>VaultItemService</span></div>
+        <div class="cc-section-title">Endpoints</div>
+        <ul class="cc-list">
+          <li><span class="method-name">create(userId, vaultId, dto)</span></li>
+          <li><span class="method-name">findAll(userId, vaultId, query)</span></li>
+          <li><span class="method-name">findOne(userId, vaultId, itemId)</span></li>
+          <li><span class="method-name">update(userId, vaultId, itemId, dto)</span></li>
+          <li><span class="method-name">delete(userId, vaultId, itemId)</span></li>
+          <li><span class="method-name">batchUpdate(userId, vaultId, dto)</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-service">
+      <div class="cc-head">VaultItemService<span class="cc-type">Service</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>ItemRepo, VaultService, AuditService</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">create(userId, vaultId, dto)</span><span class="method-ret">→ VaultItem</span></li>
+          <li><span class="method-name">findAll(userId, vaultId, query)</span><span class="method-ret">→ VaultItem[]</span></li>
+          <li><span class="method-name">update(userId, vaultId, itemId, dto)</span><span class="method-ret">→ VaultItem</span></li>
+          <li><span class="method-name">delete(userId, vaultId, itemId)</span><span class="method-ret">→ void</span></li>
+          <li><span class="method-name">batchUpdate(userId, vaultId, items)</span><span class="method-ret">→ VaultItem[]</span></li>
+          <li><span class="method-name">incrementVersion(item)</span><span class="method-ret">→ number</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-service">
+      <div class="cc-head">SyncService<span class="cc-type">Service</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>ItemRepo, VaultService</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">getChangesSince(userId, vaultId, since, ver)</span><span class="method-ret">→ SyncResponse</span></li>
+          <li><span class="method-name">applyChanges(userId, vaultId, changes)</span><span class="method-ret">→ SyncResult</span></li>
+          <li><span class="method-name">resolveConflicts(local, remote)</span><span class="method-ret">→ VaultItem</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-gateway">
+      <div class="cc-head">SyncGateway<span class="cc-type">WebSocket</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>SyncService, AuthService</span></div>
+        <div class="cc-section-title">Events</div>
+        <ul class="cc-list">
+          <li><span class="method-name">handleConnection(client)</span></li>
+          <li><span class="method-name">handleDisconnect(client)</span></li>
+          <li><span class="method-name">handleSync(client, data)</span><span class="method-ret">→ SyncResponse</span></li>
+          <li><span class="method-name">notifyVaultUpdate(vaultId, excludeUser)</span></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<!-- ============================================= -->
+<!-- 5. SHARING MODULE -->
+<!-- ============================================= -->
+<section id="share-mod">
+<h2><span>SharingModule</span><span class="badge" style="background:rgba(6,182,212,.2);color:var(--cyan)">MODULE</span></h2>
+
+<div class="mod-section" style="border-color:rgba(6,182,212,.2);background:rgba(6,182,212,.015);">
+  <div class="ms-label" style="background:var(--bg);color:var(--cyan);">SharingModule</div>
+  <div class="class-grid">
+
+    <div class="class-card card-controller">
+      <div class="cc-head">SharingController<span class="cc-type">Controller</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>SharingService</span></div>
+        <div class="cc-section-title">Endpoints</div>
+        <ul class="cc-list">
+          <li><span class="method-name">addMember(userId, vaultId, dto)</span><span class="method-ret">→ MemberDto</span></li>
+          <li><span class="method-name">removeMember(userId, vaultId, memberId)</span><span class="method-ret">→ void</span></li>
+          <li><span class="method-name">updateRole(userId, vaultId, memberId, dto)</span><span class="method-ret">→ MemberDto</span></li>
+          <li><span class="method-name">listMembers(userId, vaultId)</span><span class="method-ret">→ MemberDto[]</span></li>
+          <li><span class="method-name">getPublicKey(userId)</span><span class="method-ret">→ PublicKeyDto</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-service">
+      <div class="cc-head">SharingService<span class="cc-type">Service</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>VaultService, MemberRepo, UserRepo, AuditService</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">addMember(ownerId, vaultId, dto)</span><span class="method-ret">→ VaultMember</span></li>
+          <li><span class="method-name">removeMember(ownerId, vaultId, memberId)</span><span class="method-ret">→ void</span></li>
+          <li><span class="method-name">updateRole(ownerId, vaultId, memberId, role)</span><span class="method-ret">→ VaultMember</span></li>
+          <li><span class="method-name">listMembers(userId, vaultId)</span><span class="method-ret">→ VaultMember[]</span></li>
+          <li><span class="method-name">getUserPublicKey(userId)</span><span class="method-ret">→ string</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-service">
+      <div class="cc-head">KeyRotationService<span class="cc-type">Service</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>MemberRepo, ItemRepo, CryptoService</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">rotateVaultKey(vaultId, newKeys[])</span><span class="method-ret">→ void</span></li>
+          <li><span class="method-name">reEncryptItems(vaultId, items[])</span><span class="method-ret">→ void</span></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<!-- ============================================= -->
+<!-- 6. CRYPTO MODULE -->
+<!-- ============================================= -->
+<section id="crypto-mod">
+<h2><span>CryptoModule</span><span class="badge" style="background:rgba(168,85,247,.2);color:var(--purple)">MODULE</span></h2>
+
+<div class="mod-section" style="border-color:rgba(168,85,247,.2);background:rgba(168,85,247,.015);">
+  <div class="ms-label" style="background:var(--bg);color:var(--purple);">CryptoModule</div>
+  <div class="class-grid">
+
+    <div class="class-card card-service" style="border-color:rgba(168,85,247,.3);">
+      <div class="cc-head" style="background:rgba(168,85,247,.1);color:var(--purple);">CryptoService<span class="cc-type">Service</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>libsodium-wrappers</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">generateKeyPair()</span><span class="method-ret">→ KeyPair</span></li>
+          <li><span class="method-name">encryptForRecipient(plain, recipPub, senderPriv)</span><span class="method-ret">→ SealedMsg</span></li>
+          <li><span class="method-name">decryptFromSender(sealed, senderPub, recipPriv)</span><span class="method-ret">→ Uint8Array</span></li>
+          <li><span class="method-name">sealedBoxEncrypt(plain, recipPub)</span><span class="method-ret">→ Uint8Array</span></li>
+          <li><span class="method-name">sealedBoxDecrypt(ct, pub, priv)</span><span class="method-ret">→ Uint8Array</span></li>
+          <li><span class="method-name">encryptSymmetric(plain, key)</span><span class="method-ret">→ string</span></li>
+          <li><span class="method-name">decryptSymmetric(payload, key)</span><span class="method-ret">→ string</span></li>
+          <li><span class="method-name">generateRandomKey(length)</span><span class="method-ret">→ Uint8Array</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-service" style="border-color:rgba(168,85,247,.3);">
+      <div class="cc-head" style="background:rgba(168,85,247,.1);color:var(--purple);">EncryptionService<span class="cc-type">Service</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>Node.js crypto (AES-256-GCM)</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">encrypt(plain, key, aad?)</span><span class="method-ret">→ EncPayload</span></li>
+          <li><span class="method-name">decrypt(payload, key, aad?)</span><span class="method-ret">→ Buffer</span></li>
+          <li><span class="method-name">wrapKey(keyToWrap, wrappingKey, purpose)</span><span class="method-ret">→ EncPayload</span></li>
+          <li><span class="method-name">unwrapKey(wrapped, wrappingKey, purpose)</span><span class="method-ret">→ Buffer</span></li>
+          <li><span class="method-name">secureZero(buf)</span><span class="method-ret">→ void</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="class-card card-service" style="border-color:rgba(168,85,247,.3);">
+      <div class="cc-head" style="background:rgba(168,85,247,.1);color:var(--purple);">KeyDerivationService<span class="cc-type">Service</span></div>
+      <div class="cc-body">
+        <div class="cc-deps">→ <span>argon2 (node-argon2), Node.js crypto HKDF</span></div>
+        <div class="cc-section-title">Methods</div>
+        <ul class="cc-list">
+          <li><span class="method-name">deriveKey(password, salt, params)</span><span class="method-ret">→ Buffer</span></li>
+          <li><span class="method-name">deriveSubkeys(masterKey, userId)</span><span class="method-ret">→ DerivedSubkeys</span></li>
+          <li><span class="method-name">generateSalt()</span><span class="method-ret">→ Buffer</span></li>
+          <li><span class="method-name">getCurrentKdfVersion()</span><span class="method-ret">→ number</span></li>
+          <li><span class="method-name">getKdfParams(version)</span><span class="method-ret">→ KdfParams</span></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<!-- ============================================= -->
+<!-- 7. ENTITIES (ER) -->
+<!-- ============================================= -->
+<section id="entities">
+<h2><span>Entities (Data Model)</span><span class="badge" style="background:rgba(59,130,246,.2);color:var(--blue)">ENTITIES</span></h2>
+
+<div class="diagram-box">
+  <div class="tag">ENTITY-RELATIONSHIP</div>
+  <div class="er-grid">
+
+    <div class="entity-card">
+      <div class="entity-head">User<span class="e-tag">Entity</span></div>
+      <div class="entity-body">
+        <div class="field-row"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-badge fb-pk">PK</span></div>
+        <div class="field-row"><span class="field-name">email</span><span class="field-type">String</span><span class="field-badge fb-uk">UK</span></div>
+        <div class="field-row"><span class="field-name">publicKey</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">encryptedPrivateKey</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">srpSalt</span><span class="field-type">Bytes</span></div>
+        <div class="field-row"><span class="field-name">srpVerifier</span><span class="field-type">Bytes</span></div>
+        <div class="field-row"><span class="field-name">kdfSalt</span><span class="field-type">Bytes</span></div>
+        <div class="field-row"><span class="field-name">kdfAlgorithm</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">kdfMemoryCost</span><span class="field-type">Int</span></div>
+        <div class="field-row"><span class="field-name">kdfTimeCost</span><span class="field-type">Int</span></div>
+        <div class="field-row"><span class="field-name">kdfParallelism</span><span class="field-type">Int</span></div>
+        <div class="field-row"><span class="field-name">kdfVersion</span><span class="field-type">Int</span></div>
+        <div class="field-row"><span class="field-name">twoFactorEnabled</span><span class="field-type">Boolean</span></div>
+        <div class="field-row"><span class="field-name">twoFactorMethod</span><span class="field-type">String?</span></div>
+        <div class="field-row"><span class="field-name">createdAt</span><span class="field-type">DateTime</span></div>
+        <div class="field-row"><span class="field-name">updatedAt</span><span class="field-type">DateTime</span></div>
+      </div>
+    </div>
+
+    <div class="entity-card">
+      <div class="entity-head">Vault<span class="e-tag">Entity</span></div>
+      <div class="entity-body">
+        <div class="field-row"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-badge fb-pk">PK</span></div>
+        <div class="field-row"><span class="field-name">ownerId</span><span class="field-type">UUID</span><span class="field-badge fb-fk">FK</span></div>
+        <div class="field-row"><span class="field-name">orgId</span><span class="field-type">UUID?</span></div>
+        <div class="field-row"><span class="field-name">name</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">createdAt</span><span class="field-type">DateTime</span></div>
+      </div>
+    </div>
+
+    <div class="entity-card">
+      <div class="entity-head">VaultMember<span class="e-tag">Entity</span></div>
+      <div class="entity-body">
+        <div class="field-row"><span class="field-name">vaultId</span><span class="field-type">UUID</span><span class="field-badge fb-pk">PK</span><span class="field-badge fb-fk" style="margin-left:.2rem">FK</span></div>
+        <div class="field-row"><span class="field-name">userId</span><span class="field-type">UUID</span><span class="field-badge fb-pk">PK</span><span class="field-badge fb-fk" style="margin-left:.2rem">FK</span></div>
+        <div class="field-row"><span class="field-name">encryptedVaultKey</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">grantedBy</span><span class="field-type">UUID</span><span class="field-badge fb-fk">FK</span></div>
+        <div class="field-row"><span class="field-name">role</span><span class="field-type">VaultRole</span><span class="field-badge fb-enum">ENUM</span></div>
+        <div class="field-row"><span class="field-name">grantedAt</span><span class="field-type">DateTime</span></div>
+      </div>
+    </div>
+
+    <div class="entity-card">
+      <div class="entity-head">VaultItem<span class="e-tag">Entity</span></div>
+      <div class="entity-body">
+        <div class="field-row"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-badge fb-pk">PK</span></div>
+        <div class="field-row"><span class="field-name">vaultId</span><span class="field-type">UUID</span><span class="field-badge fb-fk">FK</span></div>
+        <div class="field-row"><span class="field-name">encryptedData</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">itemType</span><span class="field-type">ItemType</span><span class="field-badge fb-enum">ENUM</span></div>
+        <div class="field-row"><span class="field-name">createdBy</span><span class="field-type">UUID</span><span class="field-badge fb-fk">FK</span></div>
+        <div class="field-row"><span class="field-name">createdAt</span><span class="field-type">DateTime</span></div>
+        <div class="field-row"><span class="field-name">updatedAt</span><span class="field-type">DateTime</span></div>
+        <div class="field-row"><span class="field-name">version</span><span class="field-type">Int</span></div>
+      </div>
+    </div>
+
+    <div class="entity-card">
+      <div class="entity-head">TotpSecret<span class="e-tag">Entity</span></div>
+      <div class="entity-body">
+        <div class="field-row"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-badge fb-pk">PK</span></div>
+        <div class="field-row"><span class="field-name">userId</span><span class="field-type">UUID</span><span class="field-badge fb-fk">FK</span><span class="field-badge fb-uk" style="margin-left:.2rem">UK</span></div>
+        <div class="field-row"><span class="field-name">encryptedSecret</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">iv</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">authTag</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">isVerified</span><span class="field-type">Boolean</span></div>
+        <div class="field-row"><span class="field-name">createdAt</span><span class="field-type">DateTime</span></div>
+      </div>
+    </div>
+
+    <div class="entity-card">
+      <div class="entity-head">WebAuthnCredential<span class="e-tag">Entity</span></div>
+      <div class="entity-body">
+        <div class="field-row"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-badge fb-pk">PK</span></div>
+        <div class="field-row"><span class="field-name">userId</span><span class="field-type">UUID</span><span class="field-badge fb-fk">FK</span></div>
+        <div class="field-row"><span class="field-name">credentialId</span><span class="field-type">String</span><span class="field-badge fb-uk">UK</span></div>
+        <div class="field-row"><span class="field-name">credentialPublicKey</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">counter</span><span class="field-type">BigInt</span></div>
+        <div class="field-row"><span class="field-name">credentialDeviceType</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">transports</span><span class="field-type">String[]</span></div>
+        <div class="field-row"><span class="field-name">name</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">lastUsedAt</span><span class="field-type">DateTime?</span></div>
+      </div>
+    </div>
+
+    <div class="entity-card">
+      <div class="entity-head">TrustedDevice<span class="e-tag">Entity</span></div>
+      <div class="entity-body">
+        <div class="field-row"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-badge fb-pk">PK</span></div>
+        <div class="field-row"><span class="field-name">userId</span><span class="field-type">UUID</span><span class="field-badge fb-fk">FK</span></div>
+        <div class="field-row"><span class="field-name">deviceToken</span><span class="field-type">String</span><span class="field-badge fb-uk">UK</span></div>
+        <div class="field-row"><span class="field-name">userAgent</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">ipAddress</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">name</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">expiresAt</span><span class="field-type">DateTime</span></div>
+        <div class="field-row"><span class="field-name">lastUsedAt</span><span class="field-type">DateTime?</span></div>
+      </div>
+    </div>
+
+    <div class="entity-card">
+      <div class="entity-head">RecoveryCode<span class="e-tag">Entity</span></div>
+      <div class="entity-body">
+        <div class="field-row"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-badge fb-pk">PK</span></div>
+        <div class="field-row"><span class="field-name">userId</span><span class="field-type">UUID</span><span class="field-badge fb-fk">FK</span></div>
+        <div class="field-row"><span class="field-name">codeHash</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">usedAt</span><span class="field-type">DateTime?</span></div>
+      </div>
+    </div>
+
+    <div class="entity-card">
+      <div class="entity-head">AuditLog<span class="e-tag">Entity</span></div>
+      <div class="entity-body">
+        <div class="field-row"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-badge fb-pk">PK</span></div>
+        <div class="field-row"><span class="field-name">userId</span><span class="field-type">UUID</span><span class="field-badge fb-fk">FK</span></div>
+        <div class="field-row"><span class="field-name">action</span><span class="field-type">AuditAction</span><span class="field-badge fb-enum">ENUM</span></div>
+        <div class="field-row"><span class="field-name">resourceType</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">resourceId</span><span class="field-type">UUID</span></div>
+        <div class="field-row"><span class="field-name">metadata</span><span class="field-type">JSON</span></div>
+        <div class="field-row"><span class="field-name">ipAddress</span><span class="field-type">String</span></div>
+        <div class="field-row"><span class="field-name">createdAt</span><span class="field-type">DateTime</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RELATIONSHIPS -->
+  <div style="margin-top:2rem;">
+    <h3 style="font-size:.9rem;font-weight:600;margin-bottom:.75rem;color:var(--text-muted);">Relationships</h3>
+    <div class="rel-grid">
+      <div class="rel-item"><span class="rel-from">User</span><span class="rel-arrow">1 ─── *</span><span class="rel-to">Vault</span></div>
+      <div class="rel-item"><span class="rel-from">User</span><span class="rel-arrow">1 ─── *</span><span class="rel-to">VaultMember</span></div>
+      <div class="rel-item"><span class="rel-from">Vault</span><span class="rel-arrow">1 ─── *</span><span class="rel-to">VaultMember</span></div>
+      <div class="rel-item"><span class="rel-from">Vault</span><span class="rel-arrow">1 ─── *</span><span class="rel-to">VaultItem</span></div>
+      <div class="rel-item"><span class="rel-from">User</span><span class="rel-arrow">1 ─── 0..1</span><span class="rel-to">TotpSecret</span></div>
+      <div class="rel-item"><span class="rel-from">User</span><span class="rel-arrow">1 ─── *</span><span class="rel-to">WebAuthnCredential</span></div>
+      <div class="rel-item"><span class="rel-from">User</span><span class="rel-arrow">1 ─── *</span><span class="rel-to">TrustedDevice</span></div>
+      <div class="rel-item"><span class="rel-from">User</span><span class="rel-arrow">1 ─── *</span><span class="rel-to">RecoveryCode</span></div>
+      <div class="rel-item"><span class="rel-from">User</span><span class="rel-arrow">1 ─── *</span><span class="rel-to">AuditLog</span></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--yellow);"></div> Primary Key (PK)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--purple);"></div> Foreign Key (FK)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--cyan);"></div> Unique (UK)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--pink);"></div> Enum</div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================= -->
+<!-- 8. ENUMS -->
+<!-- ============================================= -->
+<section id="enums">
+<h2><span>Enumerations</span><span class="badge" style="background:rgba(168,85,247,.2);color:var(--purple)">ENUMS</span></h2>
+
+<div class="class-grid">
+  <div class="class-card card-enum">
+    <div class="cc-head">VaultRole<span class="cc-type">Enum</span></div>
+    <div class="cc-body">
+      <ul class="cc-list">
+        <li><span class="method-name">OWNER</span></li>
+        <li><span class="method-name">ADMIN</span></li>
+        <li><span class="method-name">VIEWER</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="class-card card-enum">
+    <div class="cc-head">ItemType<span class="cc-type">Enum</span></div>
+    <div class="cc-body">
+      <ul class="cc-list">
+        <li><span class="method-name">LOGIN = 1</span></li>
+        <li><span class="method-name">CARD = 2</span></li>
+        <li><span class="method-name">NOTE = 3</span></li>
+        <li><span class="method-name">IDENTITY = 4</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="class-card card-enum" style="grid-column:span 2;">
+    <div class="cc-head">AuditAction<span class="cc-type">Enum</span></div>
+    <div class="cc-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 1.5rem;">
+        <ul class="cc-list">
+          <li><span class="method-name">USER_REGISTERED</span></li>
+          <li><span class="method-name">USER_LOGGED_IN</span></li>
+          <li><span class="method-name">USER_LOGGED_OUT</span></li>
+          <li><span class="method-name">VAULT_CREATED</span></li>
+          <li><span class="method-name">VAULT_DELETED</span></li>
+          <li><span class="method-name">VAULT_SHARED</span></li>
+          <li><span class="method-name">VAULT_MEMBER_REMOVED</span></li>
+          <li><span class="method-name">VAULT_KEY_ROTATED</span></li>
+        </ul>
+        <ul class="cc-list">
+          <li><span class="method-name">ITEM_CREATED</span></li>
+          <li><span class="method-name">ITEM_UPDATED</span></li>
+          <li><span class="method-name">ITEM_DELETED</span></li>
+          <li><span class="method-name">TWO_FACTOR_ENABLED</span></li>
+          <li><span class="method-name">TWO_FACTOR_DISABLED</span></li>
+          <li><span class="method-name">DEVICE_TRUSTED</span></li>
+          <li><span class="method-name">DEVICE_REVOKED</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================= -->
+<!-- 9. DTOs -->
+<!-- ============================================= -->
+<section id="dtos">
+<h2><span>Data Transfer Objects</span><span class="badge" style="background:rgba(245,158,11,.2);color:var(--orange)">DTOs</span></h2>
+
+<div class="mod-section" style="border-color:rgba(245,158,11,.15);background:rgba(245,158,11,.01);margin-bottom:1.25rem;">
+  <div class="ms-label" style="background:var(--bg);color:var(--orange);">Auth DTOs</div>
+  <div class="class-grid">
+    <div class="class-card card-dto">
+      <div class="cc-head">RegisterDto<span class="cc-type">DTO</span></div>
+      <div class="cc-body"><ul class="cc-list">
+        <li><span class="method-name">email</span><span class="method-ret">string</span></li>
+        <li><span class="method-name">srpSalt</span><span class="method-ret">string</span></li>
+        <li><span class="method-name">srpVerifier</span><span class="method-ret">string</span></li>
+        <li><span class="method-name">publicKey</span><span class="method-ret">string</span></li>
+        <li><span class="method-name">encryptedPrivateKey</span><span class="method-ret">string</span></li>
+        <li><span class="method-name">kdfSalt</span><span class="method-ret">string</span></li>
+        <li><span class="method-name">kdfParams</span><span class="method-ret">KdfParams</span></li>
+      </ul></div>
+    </div>
+    <div class="class-card card-dto">
+      <div class="cc-head">LoginInitDto<span class="cc-type">DTO</span></div>
+      <div class="cc-body"><ul class="cc-list">
+        <li><span class="method-name">email</span><span class="method-ret">string</span></li>
+      </ul></div>
+    </div>
+    <div class="class-card card-dto">
+      <div class="cc-head">LoginVerifyDto<span class="cc-type">DTO</span></div>
+      <div class="cc-body"><ul class="cc-list">
+        <li><span class="method-name">email</span><span class="method-ret">string</span></li>
+        <li><span class="method-name">A</span><span class="method-ret">string</span></li>
+        <li><span class="method-name">M1</span><span class="method-ret">string</span></li>
+      </ul></div>
+    </div>
+  </div>
+</div>
+
+<div class="mod-section" style="border-color:rgba(245,158,11,.15);background:rgba(245,158,11,.01);margin-bottom:1.25rem;">
+  <div class="ms-label" style="background:var(--bg);color:var(--orange);">Vault DTOs</div>
+  <div class="class-grid">
+    <div class="class-card card-dto">
+      <div class="cc-head">CreateVaultDto<span class="cc-type">DTO</span></div>
+      <div class="cc-body"><ul class="cc-list">
+        <li><span class="method-name">name</span><span class="method-ret">string</span></li>
+        <li><span class="method-name">encryptedVaultKey</span><span class="method-ret">string</span></li>
+      </ul></div>
+    </div>
+    <div class="class-card card-dto">
+      <div class="cc-head">CreateVaultItemDto<span class="cc-type">DTO</span></div>
+      <div class="cc-body"><ul class="cc-list">
+        <li><span class="method-name">encryptedData</span><span class="method-ret">string</span></li>
+        <li><span class="method-name">itemType</span><span class="method-ret">ItemType</span></li>
+      </ul></div>
+    </div>
+    <div class="class-card card-dto">
+      <div class="cc-head">UpdateVaultItemDto<span class="cc-type">DTO</span></div>
+      <div class="cc-body"><ul class="cc-list">
+        <li><span class="method-name">encryptedData</span><span class="method-ret">string</span></li>
+        <li><span class="method-name">expectedVersion</span><span class="method-ret">number</span></li>
+      </ul></div>
+    </div>
+  </div>
+</div>
+
+<div class="mod-section" style="border-color:rgba(245,158,11,.15);background:rgba(245,158,11,.01);">
+  <div class="ms-label" style="background:var(--bg);color:var(--orange);">Crypto & Sharing DTOs</div>
+  <div class="class-grid">
+    <div class="class-card card-dto">
+      <div class="cc-head">AddMemberDto<span class="cc-type">DTO</span></div>
+      <div class="cc-body"><ul class="cc-list">
+        <li><span class="method-name">userId</span><span class="method-ret">string</span></li>
+        <li><span class="method-name">role</span><span class="method-ret">VaultRole</span></li>
+        <li><span class="method-name">encryptedVaultKey</span><span class="method-ret">string</span></li>
+      </ul></div>
+    </div>
+    <div class="class-card card-dto">
+      <div class="cc-head">EncryptedPayload<span class="cc-type">DTO</span></div>
+      <div class="cc-body"><ul class="cc-list">
+        <li><span class="method-name">ciphertext</span><span class="method-ret">string (base64)</span></li>
+        <li><span class="method-name">version</span><span class="method-ret">number</span></li>
+      </ul></div>
+    </div>
+    <div class="class-card card-dto">
+      <div class="cc-head">KdfParams<span class="cc-type">DTO</span></div>
+      <div class="cc-body"><ul class="cc-list">
+        <li><span class="method-name">algorithm</span><span class="method-ret">string</span></li>
+        <li><span class="method-name">memoryCost</span><span class="method-ret">number</span></li>
+        <li><span class="method-name">timeCost</span><span class="method-ret">number</span></li>
+        <li><span class="method-name">parallelism</span><span class="method-ret">number</span></li>
+        <li><span class="method-name">version</span><span class="method-ret">number</span></li>
+      </ul></div>
+    </div>
+    <div class="class-card card-dto">
+      <div class="cc-head">KeyPair<span class="cc-type">DTO</span></div>
+      <div class="cc-body"><ul class="cc-list">
+        <li><span class="method-name">publicKey</span><span class="method-ret">Uint8Array</span></li>
+        <li><span class="method-name">privateKey</span><span class="method-ret">Uint8Array</span></li>
+      </ul></div>
+    </div>
+    <div class="class-card card-dto">
+      <div class="cc-head">SealedMessage<span class="cc-type">DTO</span></div>
+      <div class="cc-body"><ul class="cc-list">
+        <li><span class="method-name">nonce</span><span class="method-ret">Uint8Array</span></li>
+        <li><span class="method-name">ciphertext</span><span class="method-ret">Uint8Array</span></li>
+      </ul></div>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<script>
+document.querySelectorAll('nav a').forEach(l=>{
+  l.addEventListener('click',e=>{
+    e.preventDefault();
+    const t=document.querySelector(l.getAttribute('href'));
+    if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+const secs=document.querySelectorAll('section[id]');
+window.addEventListener('scroll',()=>{
+  let c='';
+  secs.forEach(s=>{if(window.scrollY>=s.offsetTop-120)c=s.id;});
+  document.querySelectorAll('nav a').forEach(l=>{
+    l.classList.toggle('active',l.getAttribute('href')==='#'+c);
+  });
+  document.getElementById('backTop').classList.toggle('show',window.scrollY>400);
+});
+
+// Staggered fade-in
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}});
+},{threshold:.1});
+document.querySelectorAll('.class-card,.entity-card,.mod-node,.rel-item').forEach((el,i)=>{
+  el.style.opacity='0';el.style.transform='translateY(15px)';
+  el.style.transition=`opacity .4s ease ${i*.03}s, transform .4s ease ${i*.03}s, box-shadow .2s`;
+  obs.observe(el);
+});
+</script>
+</body>
+</html>

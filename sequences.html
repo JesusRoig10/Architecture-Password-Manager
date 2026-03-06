@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Manager - Sequence Diagrams</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#232733;--border:#2e3345;--text:#e2e8f0;--text-muted:#8892a8;--accent:#6366f1;--accent-light:#818cf8;--green:#22c55e;--blue:#3b82f6;--cyan:#06b6d4;--orange:#f59e0b;--red:#ef4444;--purple:#a855f7;--pink:#ec4899;--teal:#14b8a6;--yellow:#eab308;--shadow:0 4px 24px rgba(0,0,0,0.4)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(15,17,23,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 2rem}
+nav .nav-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:2rem;height:60px}
+nav .logo{font-weight:800;font-size:1.1rem;background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+nav .nav-links{display:flex;gap:.25rem;overflow-x:auto}
+nav .nav-links a{color:var(--text-muted);text-decoration:none;font-size:.75rem;padding:.4rem .6rem;border-radius:6px;white-space:nowrap;transition:all .2s}
+nav .nav-links a:hover,nav .nav-links a.active{color:var(--text);background:var(--surface2)}
+.page{max-width:1400px;margin:0 auto;padding:80px 2rem 4rem}
+.hero{text-align:center;padding:3rem 0 2rem}
+.hero h1{font-size:2.5rem;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,#fff 0%,var(--accent-light) 50%,var(--cyan) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+.hero p{color:var(--text-muted);font-size:1.05rem;max-width:600px;margin:0 auto}
+section{margin-bottom:4rem}
+section>h2{font-size:1.4rem;font-weight:700;margin-bottom:1.5rem;padding-bottom:.75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem}
+.badge{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;padding:.2rem .5rem;border-radius:4px;font-weight:600}
+.diagram-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;box-shadow:var(--shadow);overflow-x:auto;margin-bottom:1.5rem;position:relative}
+.diagram-box .tag{position:absolute;top:1rem;right:1rem;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);background:var(--surface2);padding:.2rem .6rem;border-radius:4px}
+
+/* ===== SEQUENCE DIAGRAM ===== */
+.seq{display:flex;flex-direction:column;min-width:750px}
+.seq-participants{display:flex;gap:0;position:sticky;top:60px;z-index:10;background:var(--surface);padding-bottom:.5rem}
+.seq-p{flex:1;text-align:center;padding:.6rem .5rem;border-radius:8px;font-size:.72rem;font-weight:700;border:2px solid;margin:0 .25rem;min-width:110px}
+.seq-p.p-actor{background:rgba(236,72,153,.1);border-color:rgba(236,72,153,.4);color:var(--pink)}
+.seq-p.p-client{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.4);color:var(--blue)}
+.seq-p.p-worker{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.4);color:var(--purple)}
+.seq-p.p-backend{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.4);color:var(--green)}
+.seq-p.p-db{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.4);color:var(--red)}
+.seq-p.p-redis{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.4);color:var(--orange)}
+.seq-p.p-ws{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.4);color:var(--cyan)}
+.seq-p .p-sub{font-weight:400;font-size:.6rem;color:var(--text-muted);display:block;margin-top:.15rem}
+.seq-body{position:relative;display:flex;flex-direction:column}
+
+/* Lifelines */
+.seq-body::before{display:none}
+.seq-row{display:flex;align-items:stretch;min-height:2.5rem;position:relative}
+.seq-row:nth-child(even){background:rgba(255,255,255,.01)}
+.seq-row:hover{background:rgba(99,102,241,.03)}
+.seq-lane{flex:1;position:relative;display:flex;justify-content:center;align-items:center;min-width:110px;margin:0 .25rem}
+.seq-lane::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:1px;background:repeating-linear-gradient(to bottom,var(--border) 0 4px,transparent 4px 8px)}
+
+/* Messages */
+.seq-msg{position:absolute;display:flex;align-items:center;height:100%;z-index:2}
+.seq-msg .msg-line{height:2px;flex:1;position:relative}
+.seq-msg .msg-line.solid{background:var(--accent-light)}
+.seq-msg .msg-line.dashed{background:repeating-linear-gradient(to right,var(--green) 0 6px,transparent 6px 10px)}
+.seq-msg .msg-arrow{font-size:.7rem;line-height:1}
+.seq-msg .msg-label{position:absolute;top:-1.1rem;left:50%;transform:translateX(-50%);font-size:.62rem;white-space:nowrap;padding:.1rem .5rem;border-radius:3px;background:var(--surface);border:1px solid var(--border);color:var(--text);z-index:3}
+
+/* Notes */
+.seq-note{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);border-radius:6px;padding:.35rem .6rem;font-size:.62rem;color:var(--accent-light);line-height:1.35;max-width:200px;text-align:center;z-index:2;position:relative}
+.seq-note.note-green{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.25);color:var(--green)}
+.seq-note.note-blue{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.25);color:var(--blue)}
+.seq-note.note-red{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25);color:var(--red)}
+.seq-note.note-orange{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.25);color:var(--orange)}
+.seq-note.note-purple{background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.25);color:var(--purple)}
+
+/* Step numbers */
+.step-num{position:absolute;left:.5rem;top:50%;transform:translateY(-50%);font-size:.55rem;color:var(--text-muted);font-weight:700;background:var(--surface2);width:1.3rem;height:1.3rem;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:5}
+
+/* Alt blocks */
+.seq-alt{border:1px solid rgba(245,158,11,.3);border-radius:8px;background:rgba(245,158,11,.03);margin:.5rem 0;padding:.25rem 0;position:relative}
+.seq-alt .alt-label{position:absolute;top:-.5rem;left:1rem;font-size:.55rem;font-weight:700;color:var(--orange);background:var(--surface);padding:0 .4rem;text-transform:uppercase;letter-spacing:.08em}
+.seq-alt .alt-divider{border-top:1px dashed rgba(245,158,11,.25);margin:0 1rem}
+
+/* ===== SIMPLIFIED FLOW APPROACH ===== */
+.flow{display:flex;flex-direction:column;gap:0;min-width:700px}
+.flow-header{display:flex;gap:.25rem;margin-bottom:.5rem}
+.flow-col{flex:1;text-align:center;padding:.5rem .3rem;border-radius:8px;font-size:.7rem;font-weight:700;border:2px solid;min-width:100px}
+
+.flow-step{display:flex;align-items:stretch;min-height:2.2rem;position:relative;padding:.3rem 0}
+.flow-step:nth-child(even){background:rgba(255,255,255,.012)}
+.flow-step:hover{background:rgba(99,102,241,.04);border-radius:4px}
+.flow-cell{flex:1;display:flex;justify-content:center;align-items:center;min-width:100px;position:relative}
+.flow-cell::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:1px;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.06) 0 3px,transparent 3px 7px)}
+
+.flow-arrow{display:flex;align-items:center;position:absolute;z-index:2;height:2px}
+.flow-arrow .fa-line{height:2px;flex:1}
+.flow-arrow .fa-line.req{background:var(--accent-light)}
+.flow-arrow .fa-line.res{background:repeating-linear-gradient(to right,var(--green) 0 5px,transparent 5px 9px)}
+.flow-arrow .fa-head{font-size:.65rem;line-height:1}
+.flow-arrow .fa-text{position:absolute;top:-1rem;left:50%;transform:translateX(-50%);font-size:.6rem;white-space:nowrap;background:var(--surface);padding:.1rem .4rem;border-radius:3px;border:1px solid var(--border);color:var(--text);z-index:3}
+
+.flow-note{background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:5px;padding:.3rem .5rem;font-size:.6rem;color:var(--accent-light);line-height:1.3;text-align:center;z-index:2;max-width:160px}
+.flow-note.n-green{background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.2);color:var(--green)}
+.flow-note.n-blue{background:rgba(59,130,246,.07);border-color:rgba(59,130,246,.2);color:var(--blue)}
+.flow-note.n-purple{background:rgba(168,85,247,.07);border-color:rgba(168,85,247,.2);color:var(--purple)}
+.flow-note.n-red{background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.2);color:var(--red)}
+.flow-note.n-orange{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.2);color:var(--orange)}
+.flow-note.n-pink{background:rgba(236,72,153,.07);border-color:rgba(236,72,153,.2);color:var(--pink)}
+
+.sn{position:absolute;left:.3rem;top:50%;transform:translateY(-50%);font-size:.5rem;color:var(--text-muted);font-weight:700;background:var(--surface2);width:1.2rem;height:1.2rem;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:5}
+
+/* Alt block simplified */
+.alt-block{border:1px solid rgba(245,158,11,.25);border-radius:8px;background:rgba(245,158,11,.02);margin:.4rem .5rem;padding:.2rem 0;position:relative}
+.alt-block .ab-label{position:absolute;top:-.45rem;left:.8rem;font-size:.5rem;font-weight:700;color:var(--orange);background:var(--surface);padding:0 .3rem;text-transform:uppercase;letter-spacing:.06em}
+.alt-block .ab-sep{border-top:1px dashed rgba(245,158,11,.2);margin:0 .5rem}
+
+/* ===== LEGEND ===== */
+.legend{display:flex;flex-wrap:wrap;gap:1.2rem;margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)}
+.legend-item{display:flex;align-items:center;gap:.4rem;font-size:.7rem;color:var(--text-muted)}
+.legend-line{width:28px;height:2px}
+.legend-line.l-req{background:var(--accent-light)}
+.legend-line.l-res{background:repeating-linear-gradient(to right,var(--green) 0 4px,transparent 4px 7px)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+section{animation:fadeUp .5s ease-out}
+
+.back-top{position:fixed;bottom:2rem;right:2rem;width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:1.1rem;display:none;align-items:center;justify-content:center;box-shadow:var(--shadow);z-index:50;transition:transform .2s}
+.back-top:hover{transform:scale(1.1)}
+.back-top.show{display:flex}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">BlackfishID Vault</div>
+    <div class="nav-links">
+      <a href="#register" class="active">Registration</a>
+      <a href="#login">Login SRP+2FA</a>
+      <a href="#autofill">Autofill</a>
+      <a href="#capture">Save Creds</a>
+      <a href="#share">Share Vault</a>
+      <a href="#rotate">Key Rotation</a>
+      <a href="#lock">Auto-Lock</a>
+      <a href="#sync">Device Sync</a>
+    </div>
+  </div>
+</nav>
+
+<button class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<div class="page">
+
+<div class="hero">
+  <h1>Sequence Diagrams</h1>
+  <p>Detailed flows of the 8 main processes of the Password Manager</p>
+</div>
+
+<!-- LEGEND -->
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:3rem;">
+  <div style="font-size:.8rem;font-weight:700;margin-bottom:.75rem;color:var(--text-muted);">Legend</div>
+  <div class="legend" style="border:none;padding:0;margin:0;">
+    <div class="legend-item"><div class="legend-line l-req"></div> Request (solid)</div>
+    <div class="legend-item"><div class="legend-line l-res"></div> Response (dashed)</div>
+    <div class="legend-item"><div style="width:12px;height:12px;border-radius:3px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);"></div> Internal note</div>
+    <div class="legend-item"><div style="width:12px;height:12px;border-radius:3px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);"></div> ALT block</div>
+    <div class="legend-item"><div style="width:12px;height:12px;border-radius:50%;background:var(--surface2);font-size:.5rem;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);">1</div> Numbered step</div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem;">
+    <div style="padding:.2rem .5rem;border-radius:4px;font-size:.6rem;font-weight:600;background:rgba(236,72,153,.1);color:var(--pink);">Actor (pink)</div>
+    <div style="padding:.2rem .5rem;border-radius:4px;font-size:.6rem;font-weight:600;background:rgba(59,130,246,.1);color:var(--blue);">Client (blue)</div>
+    <div style="padding:.2rem .5rem;border-radius:4px;font-size:.6rem;font-weight:600;background:rgba(168,85,247,.1);color:var(--purple);">Worker (purple)</div>
+    <div style="padding:.2rem .5rem;border-radius:4px;font-size:.6rem;font-weight:600;background:rgba(34,197,94,.1);color:var(--green);">Backend (green)</div>
+    <div style="padding:.2rem .5rem;border-radius:4px;font-size:.6rem;font-weight:600;background:rgba(239,68,68,.1);color:var(--red);">DB (red)</div>
+    <div style="padding:.2rem .5rem;border-radius:4px;font-size:.6rem;font-weight:600;background:rgba(245,158,11,.1);color:var(--orange);">Redis (orange)</div>
+  </div>
+</div>
+
+<!-- ============================================= -->
+<!-- 1. REGISTRATION -->
+<!-- ============================================= -->
+<section id="register">
+<h2><span>1. User Registration</span><span class="badge" style="background:rgba(34,197,94,.2);color:var(--green)">REGISTRATION</span></h2>
+<div class="diagram-box"><div class="tag">SEQUENCE</div>
+<div id="seq-register"></div>
+</div>
+</section>
+
+<!-- 2. LOGIN -->
+<section id="login">
+<h2><span>2. Login with SRP + 2FA</span><span class="badge" style="background:rgba(99,102,241,.2);color:var(--accent-light)">AUTHENTICATION</span></h2>
+<div class="diagram-box"><div class="tag">SEQUENCE</div>
+<div id="seq-login"></div>
+</div>
+</section>
+
+<!-- 3. AUTOFILL -->
+<section id="autofill">
+<h2><span>3. Credential Autofill</span><span class="badge" style="background:rgba(59,130,246,.2);color:var(--blue)">EXTENSION</span></h2>
+<div class="diagram-box"><div class="tag">SEQUENCE</div>
+<div id="seq-autofill"></div>
+</div>
+</section>
+
+<!-- 4. CAPTURE -->
+<section id="capture">
+<h2><span>4. Credential Capture & Save</span><span class="badge" style="background:rgba(168,85,247,.2);color:var(--purple)">CAPTURE</span></h2>
+<div class="diagram-box"><div class="tag">SEQUENCE</div>
+<div id="seq-capture"></div>
+</div>
+</section>
+
+<!-- 5. SHARE -->
+<section id="share">
+<h2><span>5. Share Vault</span><span class="badge" style="background:rgba(6,182,212,.2);color:var(--cyan)">SHARING</span></h2>
+<div class="diagram-box"><div class="tag">SEQUENCE</div>
+<div id="seq-share"></div>
+</div>
+</section>
+
+<!-- 6. ROTATE -->
+<section id="rotate">
+<h2><span>6. Vault Key Rotation</span><span class="badge" style="background:rgba(239,68,68,.2);color:var(--red)">KEY ROTATION</span></h2>
+<div class="diagram-box"><div class="tag">SEQUENCE</div>
+<div id="seq-rotate"></div>
+</div>
+</section>
+
+<!-- 7. LOCK -->
+<section id="lock">
+<h2><span>7. Auto-Lock & Unlock</span><span class="badge" style="background:rgba(245,158,11,.2);color:var(--orange)">SESSION</span></h2>
+<div class="diagram-box"><div class="tag">SEQUENCE</div>
+<div id="seq-lock"></div>
+</div>
+</section>
+
+<!-- 8. SYNC -->
+<section id="sync">
+<h2><span>8. Multi-Device Synchronization</span><span class="badge" style="background:rgba(236,72,153,.2);color:var(--pink)">SYNC</span></h2>
+<div class="diagram-box"><div class="tag">SEQUENCE</div>
+<div id="seq-sync"></div>
+</div>
+</section>
+
+</div>
+
+<script>
+/* ===== SEQUENCE DIAGRAM RENDERER ===== */
+const COLORS = {
+  actor:  {bg:'rgba(236,72,153,.1)',  border:'rgba(236,72,153,.4)',  color:'#ec4899', note:'n-pink'},
+  client: {bg:'rgba(59,130,246,.1)',   border:'rgba(59,130,246,.4)',  color:'#3b82f6', note:'n-blue'},
+  worker: {bg:'rgba(168,85,247,.1)',   border:'rgba(168,85,247,.4)',  color:'#a855f7', note:'n-purple'},
+  backend:{bg:'rgba(34,197,94,.1)',    border:'rgba(34,197,94,.4)',   color:'#22c55e', note:'n-green'},
+  db:     {bg:'rgba(239,68,68,.1)',    border:'rgba(239,68,68,.4)',   color:'#ef4444', note:'n-red'},
+  redis:  {bg:'rgba(245,158,11,.1)',   border:'rgba(245,158,11,.4)', color:'#f59e0b', note:'n-orange'},
+  ws:     {bg:'rgba(6,182,212,.1)',    border:'rgba(6,182,212,.4)',   color:'#06b6d4', note:'n-blue'},
+  ext:    {bg:'rgba(99,102,241,.1)',   border:'rgba(99,102,241,.4)', color:'#6366f1', note:''}
+};
+
+function renderSeq(targetId, participants, steps) {
+  const container = document.getElementById(targetId);
+  if (!container) return;
+  let html = '<div class="flow">';
+
+  // Header
+  html += '<div class="flow-header">';
+  participants.forEach(p => {
+    const c = COLORS[p.type] || COLORS.client;
+    html += `<div class="flow-col" style="background:${c.bg};border-color:${c.border};color:${c.color}">${p.icon} ${p.name}<span class="p-sub" style="display:block;font-weight:400;font-size:.58rem;color:var(--text-muted)">${p.sub||''}</span></div>`;
+  });
+  html += '</div>';
+
+  let stepNum = 0;
+  let inAlt = false;
+
+  steps.forEach(s => {
+    if (s.type === 'alt-start') {
+      html += `<div class="alt-block"><div class="ab-label">${s.label||'ALT'}</div>`;
+      return;
+    }
+    if (s.type === 'alt-sep') {
+      html += `<div class="ab-sep"></div>`;
+      return;
+    }
+    if (s.type === 'alt-end') {
+      html += `</div>`;
+      return;
+    }
+
+    stepNum++;
+    html += `<div class="flow-step"><div class="sn">${stepNum}</div>`;
+
+    participants.forEach((p, i) => {
+      html += '<div class="flow-cell">';
+      // Note on this participant
+      if (s.type === 'note' && s.on === i) {
+        const nc = COLORS[p.type] || COLORS.client;
+        html += `<div class="flow-note ${nc.note}">${s.text}</div>`;
+      }
+      // Arrow from->to
+      if (s.type === 'msg' && (s.from === i || s.to === i)) {
+        // Render arrow only once at the midpoint
+      }
+      html += '</div>';
+    });
+
+    // Overlay arrow for msg type
+    if (s.type === 'msg') {
+      const fromPct = (s.from + 0.5) / participants.length * 100;
+      const toPct = (s.to + 0.5) / participants.length * 100;
+      const left = Math.min(fromPct, toPct);
+      const width = Math.abs(toPct - fromPct);
+      const isRight = s.to > s.from;
+      const arrowChar = isRight ? '▶' : '◀';
+      const lineClass = s.response ? 'res' : 'req';
+      html += `<div class="flow-arrow" style="left:${left}%;width:${width}%;top:50%;transform:translateY(-50%);">`;
+      if (!isRight) html += `<span class="fa-head" style="color:${s.response?'var(--green)':'var(--accent-light)'}">${arrowChar}</span>`;
+      html += `<div class="fa-line ${lineClass}"></div>`;
+      if (isRight) html += `<span class="fa-head" style="color:${s.response?'var(--green)':'var(--accent-light)'}">${arrowChar}</span>`;
+      html += `<div class="fa-text">${s.label}</div>`;
+      html += '</div>';
+    }
+
+    html += '</div>';
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+/* ===== DIAGRAM DATA ===== */
+
+// 1. REGISTER
+renderSeq('seq-register',
+  [
+    {icon:'👤',name:'User',type:'actor'},
+    {icon:'💻',name:'Client',sub:'Browser',type:'client'},
+    {icon:'⚙️',name:'Web Worker',sub:'Argon2id WASM',type:'worker'},
+    {icon:'🟢',name:'NestJS',sub:'Backend API',type:'backend'},
+    {icon:'🐘',name:'PostgreSQL',sub:'Vault DB',type:'db'}
+  ],
+  [
+    {type:'msg',from:0,to:1,label:'email + master password'},
+    {type:'note',on:1,text:'Generate Secret Key (128-bit), KDF salt, SRP salt'},
+    {type:'msg',from:1,to:2,label:'Derive key (password, salt)'},
+    {type:'note',on:2,text:'Argon2id(password, salt, m=64MiB, t=3, p=1)'},
+    {type:'msg',from:2,to:1,label:'masterKey (256-bit)',response:true},
+    {type:'note',on:1,text:'HKDF → encryptionKey + authKey'},
+    {type:'note',on:1,text:'Generate X25519 keypair + Symmetric Key'},
+    {type:'note',on:1,text:'AES-256-GCM: encrypt privateKey, symmetricKey, vaultKey'},
+    {type:'note',on:1,text:'SRP: verifier = g^hash mod N'},
+    {type:'msg',from:1,to:3,label:'POST /auth/register {email, srpSalt, srpVerifier, pubKey...}'},
+    {type:'msg',from:3,to:4,label:'INSERT users + vault + vault_member'},
+    {type:'msg',from:4,to:3,label:'created (id)',response:true},
+    {type:'msg',from:3,to:1,label:'201 {userId, vaultId}',response:true},
+    {type:'note',on:1,text:'Store Secret Key on device. Display to user.'},
+    {type:'msg',from:1,to:0,label:'Registration OK! Save your Secret Key',response:true},
+  ]
+);
+
+// 2. LOGIN
+renderSeq('seq-login',
+  [
+    {icon:'👤',name:'User',type:'actor'},
+    {icon:'💻',name:'Client',type:'client'},
+    {icon:'⚙️',name:'Worker',sub:'KDF',type:'worker'},
+    {icon:'🟢',name:'NestJS',type:'backend'},
+    {icon:'🐘',name:'PostgreSQL',type:'db'},
+    {icon:'⚡',name:'Redis',sub:'SRP state',type:'redis'}
+  ],
+  [
+    {type:'msg',from:0,to:1,label:'email'},
+    {type:'msg',from:1,to:3,label:'POST /auth/login/init {email}'},
+    {type:'msg',from:3,to:4,label:'SELECT srp_salt, srp_verifier'},
+    {type:'msg',from:4,to:3,label:'{srpSalt, srpVerifier, kdfParams}',response:true},
+    {type:'note',on:3,text:'SRP Step 1: generate b, B = kv + g^b (mod N)'},
+    {type:'msg',from:3,to:5,label:'SET srp:{email} = session TTL 300s'},
+    {type:'msg',from:3,to:1,label:'{srpSalt, B, kdfParams}',response:true},
+    {type:'msg',from:0,to:1,label:'master password'},
+    {type:'msg',from:1,to:2,label:'Argon2id(pass+secretKey, salt)'},
+    {type:'msg',from:2,to:1,label:'derivedKey',response:true},
+    {type:'note',on:1,text:'SRP Client: generate a, A = g^a, compute K, M1'},
+    {type:'msg',from:1,to:3,label:'POST /auth/login/verify {email, A, M1}'},
+    {type:'msg',from:3,to:5,label:'GET + DEL srp:{email}'},
+    {type:'msg',from:5,to:3,label:'{b, serverSession}',response:true},
+    {type:'note',on:3,text:'Verify M1, compute M2'},
+    {type:'alt-start',label:'Result'},
+    {type:'msg',from:3,to:1,label:'OK without 2FA: {M2, accessToken, refreshToken}',response:true},
+    {type:'alt-sep'},
+    {type:'msg',from:3,to:1,label:'Requires 2FA: {M2, partialToken, methods}',response:true},
+    {type:'note',on:0,text:'Enter TOTP / tap YubiKey'},
+    {type:'msg',from:1,to:3,label:'POST /auth/2fa/validate {partialToken, code}'},
+    {type:'msg',from:3,to:1,label:'{accessToken, refreshToken}',response:true},
+    {type:'alt-sep'},
+    {type:'msg',from:3,to:1,label:'401 Unauthorized',response:true},
+    {type:'alt-end'},
+    {type:'note',on:1,text:'Verify M2. Decrypt vault keys. Store in session.'},
+  ]
+);
+
+// 3. AUTOFILL
+renderSeq('seq-autofill',
+  [
+    {icon:'🌐',name:'Web Page',type:'ext'},
+    {icon:'📜',name:'Content Script',sub:'Isolated World',type:'client'},
+    {icon:'⚙️',name:'Service Worker',sub:'Background',type:'backend'},
+    {icon:'🟢',name:'NestJS',sub:'Backend API',type:'backend'}
+  ],
+  [
+    {type:'note',on:1,text:'document_idle: scan DOM, detect input[type=password]'},
+    {type:'note',on:1,text:'MutationObserver.observe() for SPAs'},
+    {type:'msg',from:1,to:2,label:'getCredentials {url: "github.com"}'},
+    {type:'note',on:2,text:'Validate sender.id === extension.id'},
+    {type:'note',on:2,text:'Check vault is unlocked'},
+    {type:'alt-start',label:'Vault state'},
+    {type:'msg',from:2,to:1,label:'{locked: true}',response:true},
+    {type:'note',on:1,text:'Show lock icon on field'},
+    {type:'alt-sep'},
+    {type:'msg',from:2,to:3,label:'GET /vaults/items?domain=github.com'},
+    {type:'msg',from:3,to:2,label:'[{encryptedData}]',response:true},
+    {type:'note',on:2,text:'Decrypt with vault key'},
+    {type:'msg',from:2,to:1,label:'{credentials: [{username, id}...]}',response:true},
+    {type:'alt-end'},
+    {type:'note',on:1,text:'Inject inline menu (Shadow DOM)'},
+    {type:'msg',from:0,to:1,label:'Click on credential'},
+    {type:'msg',from:1,to:2,label:'getFullCredential {id}'},
+    {type:'msg',from:2,to:1,label:'{username, password}',response:true},
+    {type:'note',on:1,text:'fillField: click > focus > nativeSetter > input > change > blur'},
+    {type:'msg',from:1,to:0,label:'Fill username + password fields'},
+    {type:'note',on:1,text:'Clear password from memory'},
+  ]
+);
+
+// 4. CAPTURE
+renderSeq('seq-capture',
+  [
+    {icon:'👤',name:'User',type:'actor'},
+    {icon:'🌐',name:'Web Page',type:'ext'},
+    {icon:'📜',name:'Content Script',type:'client'},
+    {icon:'⚙️',name:'Service Worker',type:'backend'},
+    {icon:'🟢',name:'NestJS',type:'backend'},
+    {icon:'🐘',name:'PostgreSQL',type:'db'}
+  ],
+  [
+    {type:'msg',from:0,to:1,label:'Fill registration form'},
+    {type:'msg',from:0,to:1,label:'Click "Sign Up" / Submit'},
+    {type:'note',on:2,text:'submit event captured (capture phase)'},
+    {type:'note',on:2,text:'captureFromForm(): locate password + username fields'},
+    {type:'msg',from:2,to:3,label:'credentialsCaptured {url, hostname, user, pass}'},
+    {type:'note',on:3,text:'Sanitize data. Search for existing credentials.'},
+    {type:'alt-start',label:'Exists?'},
+    {type:'msg',from:3,to:2,label:'showSavePrompt type="new"',response:true},
+    {type:'alt-sep'},
+    {type:'msg',from:3,to:2,label:'showSavePrompt type="update"',response:true},
+    {type:'alt-end'},
+    {type:'note',on:2,text:'Inject NotificationBar (Shadow DOM)'},
+    {type:'msg',from:0,to:2,label:'Click "Save"'},
+    {type:'msg',from:2,to:3,label:'saveCredential'},
+    {type:'note',on:3,text:'Generate Item Key (256-bit). AES-256-GCM encrypt. Wrap with vault key.'},
+    {type:'msg',from:3,to:4,label:'POST /vaults/:id/items {encryptedData}'},
+    {type:'msg',from:4,to:5,label:'INSERT vault_items'},
+    {type:'msg',from:5,to:4,label:'created',response:true},
+    {type:'msg',from:4,to:3,label:'201 {id}',response:true},
+    {type:'note',on:3,text:'Update local cache (IndexedDB)'},
+    {type:'msg',from:3,to:2,label:'{success: true}',response:true},
+    {type:'note',on:2,text:'Show "Saved!" auto-dismiss 3s'},
+  ]
+);
+
+// 5. SHARE
+renderSeq('seq-share',
+  [
+    {icon:'👤',name:'User A',sub:'Owner',type:'actor'},
+    {icon:'💻',name:'Client A',type:'client'},
+    {icon:'🟢',name:'NestJS',type:'backend'},
+    {icon:'🐘',name:'PostgreSQL',type:'db'},
+    {icon:'💻',name:'Client B',type:'client'},
+    {icon:'👤',name:'User B',sub:'Guest',type:'actor'}
+  ],
+  [
+    {type:'msg',from:0,to:1,label:'"Share vault Team with User B"'},
+    {type:'msg',from:1,to:2,label:'GET /users/userB/public-key'},
+    {type:'msg',from:2,to:3,label:'SELECT public_key WHERE email=userB'},
+    {type:'msg',from:3,to:2,label:'{publicKey}',response:true},
+    {type:'msg',from:2,to:1,label:'{publicKey}',response:true},
+    {type:'note',on:1,text:'Decrypt own private key'},
+    {type:'note',on:1,text:'Retrieve vault key from vault'},
+    {type:'note',on:1,text:'crypto_box_easy(vaultKey, nonce, userB.pub, userA.priv)'},
+    {type:'msg',from:1,to:2,label:'POST /vaults/:id/members {userId, encVaultKey, role}'},
+    {type:'note',on:2,text:'Verify owner/admin'},
+    {type:'msg',from:2,to:3,label:'INSERT vault_members + audit_logs'},
+    {type:'msg',from:3,to:2,label:'created',response:true},
+    {type:'msg',from:2,to:4,label:'WebSocket: vault_shared'},
+    {type:'msg',from:2,to:1,label:'201 {memberId}',response:true},
+    {type:'msg',from:5,to:4,label:'Open vault "Team"'},
+    {type:'msg',from:4,to:2,label:'GET /vaults/:id'},
+    {type:'msg',from:2,to:3,label:'SELECT vault, encryptedVaultKey'},
+    {type:'msg',from:3,to:2,label:'{vault, encVaultKey, grantor pubKey}',response:true},
+    {type:'msg',from:2,to:4,label:'{vault, encVaultKey}',response:true},
+    {type:'note',on:4,text:'Decrypt private key B'},
+    {type:'note',on:4,text:'crypto_box_open_easy → vault key'},
+    {type:'msg',from:4,to:2,label:'GET /vaults/:id/items'},
+    {type:'msg',from:2,to:4,label:'[{encryptedData}...]',response:true},
+    {type:'note',on:4,text:'Decrypt items with vault key'},
+  ]
+);
+
+// 6. ROTATE
+renderSeq('seq-rotate',
+  [
+    {icon:'👤',name:'Owner',type:'actor'},
+    {icon:'💻',name:'Owner Client',type:'client'},
+    {icon:'🟢',name:'NestJS',type:'backend'},
+    {icon:'🐘',name:'PostgreSQL',type:'db'},
+    {icon:'💻',name:'Member 1',type:'client'},
+    {icon:'💻',name:'Member 2',type:'client'}
+  ],
+  [
+    {type:'msg',from:0,to:1,label:'"Remove User X from vault"'},
+    {type:'note',on:1,text:'Generate new Vault Key (random 256-bit)'},
+    {type:'msg',from:1,to:2,label:'GET /vaults/:id/members (without User X)'},
+    {type:'msg',from:2,to:1,label:'[{userId, publicKey}...]',response:true},
+    {type:'note',on:1,text:'Re-encrypt new vault key for each member (crypto_box_easy)'},
+    {type:'msg',from:1,to:2,label:'GET /vaults/:id/items'},
+    {type:'msg',from:2,to:1,label:'[encrypted items]',response:true},
+    {type:'note',on:1,text:'For each item: decrypt OLD key → generate new item key → encrypt NEW key'},
+    {type:'msg',from:1,to:2,label:'POST /vaults/:id/rotate-key {memberKeys[], reEncryptedItems[]}'},
+    {type:'msg',from:2,to:3,label:'BEGIN TRANSACTION'},
+    {type:'msg',from:2,to:3,label:'DELETE member X, UPDATE members, UPDATE items, INSERT audit'},
+    {type:'msg',from:2,to:3,label:'COMMIT'},
+    {type:'msg',from:3,to:2,label:'OK',response:true},
+    {type:'msg',from:2,to:1,label:'200 {success}',response:true},
+    {type:'msg',from:2,to:4,label:'WS: vault_key_rotated'},
+    {type:'msg',from:2,to:5,label:'WS: vault_key_rotated'},
+    {type:'note',on:4,text:'Re-fetch vault key + items'},
+    {type:'note',on:5,text:'Re-fetch vault key + items'},
+  ]
+);
+
+// 7. LOCK
+renderSeq('seq-lock',
+  [
+    {icon:'⏰',name:'Chrome Alarms',type:'redis'},
+    {icon:'💤',name:'Chrome Idle',type:'ext'},
+    {icon:'⚙️',name:'Service Worker',type:'backend'},
+    {icon:'💾',name:'storage.session',sub:'Memory',type:'worker'},
+    {icon:'📜',name:'Content Scripts',type:'client'},
+    {icon:'🖼️',name:'Popup UI',type:'client'},
+    {icon:'👤',name:'User',type:'actor'}
+  ],
+  [
+    {type:'alt-start',label:'Lock Triggers'},
+    {type:'msg',from:0,to:2,label:'autoLockCheck (every 1 min)'},
+    {type:'note',on:2,text:'Date.now() - unlockedAt > 15min?'},
+    {type:'alt-sep'},
+    {type:'msg',from:1,to:2,label:'stateChanged("locked")'},
+    {type:'note',on:2,text:'System locked: immediate LOCK'},
+    {type:'alt-end'},
+    {type:'note',on:2,text:'=== LOCK PROCEDURE ==='},
+    {type:'msg',from:2,to:3,label:'remove([vaultKey, unlockedAt])'},
+    {type:'msg',from:2,to:4,label:'broadcast: vaultLocked'},
+    {type:'note',on:4,text:'Clear credentials. Hide menus. Show lock icons.'},
+    {type:'msg',from:2,to:5,label:'broadcast: vaultLocked'},
+    {type:'note',on:5,text:'Show lock screen'},
+    {type:'note',on:2,text:'=== UNLOCK PROCEDURE ==='},
+    {type:'msg',from:6,to:5,label:'Enter master password'},
+    {type:'msg',from:5,to:2,label:'{command: "unlock", password}'},
+    {type:'note',on:2,text:'Argon2id → HKDF → decrypt vault key'},
+    {type:'msg',from:2,to:3,label:'set({vaultKey, unlockedAt})'},
+    {type:'msg',from:2,to:0,label:'alarms.create("autoLockCheck", 1 min)'},
+    {type:'msg',from:2,to:4,label:'broadcast: vaultUnlocked'},
+    {type:'note',on:4,text:'Re-scan forms'},
+    {type:'msg',from:2,to:5,label:'{success: true}',response:true},
+  ]
+);
+
+// 8. SYNC
+renderSeq('seq-sync',
+  [
+    {icon:'🖥️',name:'Device 1',sub:'Desktop',type:'actor'},
+    {icon:'⚙️',name:'SW 1',sub:'Service Worker',type:'client'},
+    {icon:'🟢',name:'NestJS',type:'backend'},
+    {icon:'🐘',name:'PostgreSQL',type:'db'},
+    {icon:'📡',name:'WebSocket GW',type:'ws'},
+    {icon:'⚙️',name:'SW 2',sub:'Service Worker',type:'client'},
+    {icon:'📱',name:'Device 2',sub:'Mobile',type:'actor'}
+  ],
+  [
+    {type:'note',on:0,text:'User modifies credential'},
+    {type:'msg',from:0,to:1,label:'Encrypt updated item'},
+    {type:'msg',from:1,to:2,label:'PUT /vaults/:id/items/:itemId {encData, version:3}'},
+    {type:'msg',from:2,to:3,label:'SELECT version FROM vault_items'},
+    {type:'msg',from:3,to:2,label:'version: 2',response:true},
+    {type:'alt-start',label:'Conflict?'},
+    {type:'msg',from:2,to:3,label:'UPDATE vault_items SET version=3'},
+    {type:'msg',from:2,to:1,label:'200 {version: 3}',response:true},
+    {type:'alt-sep'},
+    {type:'msg',from:2,to:1,label:'409 Conflict {serverVersion: 4}',response:true},
+    {type:'note',on:1,text:'Resolution: last-write-wins or prompt'},
+    {type:'alt-end'},
+    {type:'msg',from:2,to:4,label:'notifyVaultUpdate(vaultId, exclude=D1)'},
+    {type:'msg',from:4,to:5,label:'WS: vault_updated {vaultId, itemId, v:3}'},
+    {type:'note',on:5,text:'Local cache outdated'},
+    {type:'msg',from:5,to:2,label:'GET /vaults/:id/items/sync?since=...&lastVersion=2'},
+    {type:'msg',from:2,to:3,label:'SELECT changed items'},
+    {type:'msg',from:3,to:2,label:'[changed items]',response:true},
+    {type:'msg',from:2,to:5,label:'{items, deletedIds, serverTime}',response:true},
+    {type:'note',on:5,text:'Decrypt and update local cache'},
+    {type:'msg',from:5,to:6,label:'Update UI'},
+  ]
+);
+
+/* ===== NAV SCROLL ===== */
+document.querySelectorAll('nav a').forEach(l=>{
+  l.addEventListener('click',e=>{
+    e.preventDefault();
+    const t=document.querySelector(l.getAttribute('href'));
+    if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+const secs=document.querySelectorAll('section[id]');
+window.addEventListener('scroll',()=>{
+  let c='';
+  secs.forEach(s=>{if(window.scrollY>=s.offsetTop-120)c=s.id;});
+  document.querySelectorAll('nav a').forEach(l=>{
+    l.classList.toggle('active',l.getAttribute('href')==='#'+c);
+  });
+  document.getElementById('backTop').classList.toggle('show',window.scrollY>400);
+});
+</script>
+</body>
+</html>

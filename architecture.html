@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Manager - Architecture Diagrams</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232733;
+    --border: #2e3345;
+    --text: #e2e8f0;
+    --text-muted: #8892a8;
+    --accent: #6366f1;
+    --accent-light: #818cf8;
+    --green: #22c55e;
+    --blue: #3b82f6;
+    --cyan: #06b6d4;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --purple: #a855f7;
+    --pink: #ec4899;
+    --teal: #14b8a6;
+    --yellow: #eab308;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden;
+  }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(15,17,23,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0 2rem; }
+  nav .nav-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; gap: 2rem; height: 60px; }
+  nav .logo { font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg, var(--accent), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; }
+  nav .nav-links { display: flex; gap: .25rem; overflow-x: auto; }
+  nav .nav-links a { color: var(--text-muted); text-decoration: none; font-size: .8rem; padding: .4rem .75rem; border-radius: 6px; white-space: nowrap; transition: all .2s; }
+  nav .nav-links a:hover, nav .nav-links a.active { color: var(--text); background: var(--surface2); }
+  .page { max-width: 1400px; margin: 0 auto; padding: 80px 2rem 4rem; }
+  .hero { text-align: center; padding: 3rem 0 2rem; }
+  .hero h1 { font-size: 2.8rem; font-weight: 800; letter-spacing: -.03em; background: linear-gradient(135deg, #fff 0%, var(--accent-light) 50%, var(--cyan) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: .5rem; }
+  .hero p { color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+  section { margin-bottom: 4rem; }
+  section > h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; padding-bottom: .75rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: .6rem; }
+  section > h2 .badge { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; padding: .2rem .5rem; border-radius: 4px; font-weight: 600; }
+  .diagram-container { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; box-shadow: var(--shadow); overflow-x: auto; position: relative; }
+  .diagram-label { position: absolute; top: 1rem; right: 1rem; font-size: .65rem; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); background: var(--surface2); padding: .2rem .6rem; border-radius: 4px; }
+  .arch-grid { display: grid; gap: 1.5rem; min-width: 900px; }
+  .arch-row { display: flex; gap: 1.5rem; justify-content: center; }
+  .arch-box { border-radius: 12px; padding: 1.25rem 1.5rem; border: 1px solid; position: relative; transition: transform .2s, box-shadow .2s; min-width: 160px; }
+  .arch-box:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .arch-box .title { font-weight: 700; font-size: .85rem; margin-bottom: .3rem; display: flex; align-items: center; gap: .4rem; }
+  .arch-box .subtitle { font-size: .7rem; color: var(--text-muted); line-height: 1.4; }
+  .arch-box ul { list-style: none; margin-top: .5rem; }
+  .arch-box ul li { font-size: .72rem; color: var(--text-muted); padding: .15rem 0; display: flex; align-items: center; gap: .3rem; }
+  .arch-box ul li::before { content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
+  .box-accent { background: rgba(99,102,241,.08); border-color: rgba(99,102,241,.3); }
+  .box-accent .title { color: var(--accent-light); }
+  .box-accent ul li::before { background: var(--accent-light); }
+  .box-green { background: rgba(34,197,94,.08); border-color: rgba(34,197,94,.3); }
+  .box-green .title { color: var(--green); }
+  .box-green ul li::before { background: var(--green); }
+  .box-blue { background: rgba(59,130,246,.08); border-color: rgba(59,130,246,.3); }
+  .box-blue .title { color: var(--blue); }
+  .box-blue ul li::before { background: var(--blue); }
+  .box-cyan { background: rgba(6,182,212,.08); border-color: rgba(6,182,212,.3); }
+  .box-cyan .title { color: var(--cyan); }
+  .box-cyan ul li::before { background: var(--cyan); }
+  .box-orange { background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.3); }
+  .box-orange .title { color: var(--orange); }
+  .box-orange ul li::before { background: var(--orange); }
+  .box-red { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.3); }
+  .box-red .title { color: var(--red); }
+  .box-red ul li::before { background: var(--red); }
+  .box-purple { background: rgba(168,85,247,.08); border-color: rgba(168,85,247,.3); }
+  .box-purple .title { color: var(--purple); }
+  .box-purple ul li::before { background: var(--purple); }
+  .box-pink { background: rgba(236,72,153,.08); border-color: rgba(236,72,153,.3); }
+  .box-pink .title { color: var(--pink); }
+  .box-pink ul li::before { background: var(--pink); }
+  .box-teal { background: rgba(20,184,166,.08); border-color: rgba(20,184,166,.3); }
+  .box-teal .title { color: var(--teal); }
+  .box-teal ul li::before { background: var(--teal); }
+  .box-yellow { background: rgba(234,179,8,.08); border-color: rgba(234,179,8,.3); }
+  .box-yellow .title { color: var(--yellow); }
+  .box-yellow ul li::before { background: var(--yellow); }
+  .box-muted { background: rgba(255,255,255,.03); border-color: var(--border); }
+  .box-muted .title { color: var(--text); }
+  .box-muted ul li::before { background: var(--text-muted); }
+  .section-box { border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; position: relative; }
+  .section-box > .section-title { font-size: .65rem; text-transform: uppercase; letter-spacing: .12em; position: absolute; top: -.55rem; left: 1.25rem; padding: 0 .5rem; }
+  .connector-down { display: flex; flex-direction: column; align-items: center; padding: .4rem 0; }
+  .connector-down .pipe { width: 2px; height: 28px; background: linear-gradient(to bottom, rgba(99,102,241,.4), rgba(6,182,212,.4)); }
+  .connector-down .tag { font-size: .58rem; color: var(--cyan); background: rgba(6,182,212,.1); padding: .1rem .5rem; border-radius: 3px; border: 1px solid rgba(6,182,212,.2); }
+  .key-flow { display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 700px; }
+  .key-node { padding: .7rem 1.25rem; border-radius: 10px; font-size: .8rem; font-weight: 600; text-align: center; position: relative; border: 1px solid; min-width: 200px; }
+  .key-node .sub { font-size: .65rem; font-weight: 400; color: var(--text-muted); margin-top: .15rem; }
+  .key-node-red { background: linear-gradient(135deg, rgba(239,68,68,.15), rgba(239,68,68,.05)); border-color: rgba(239,68,68,.4); color: #fca5a5; }
+  .key-node-yellow { background: linear-gradient(135deg, rgba(234,179,8,.15), rgba(234,179,8,.05)); border-color: rgba(234,179,8,.4); color: #fde047; }
+  .key-node-green { background: linear-gradient(135deg, rgba(34,197,94,.15), rgba(34,197,94,.05)); border-color: rgba(34,197,94,.4); color: #86efac; }
+  .key-node-blue { background: linear-gradient(135deg, rgba(59,130,246,.15), rgba(59,130,246,.05)); border-color: rgba(59,130,246,.4); color: #93c5fd; }
+  .key-node-purple { background: linear-gradient(135deg, rgba(168,85,247,.15), rgba(168,85,247,.05)); border-color: rgba(168,85,247,.4); color: #d8b4fe; }
+  .key-node-cyan { background: linear-gradient(135deg, rgba(6,182,212,.15), rgba(6,182,212,.05)); border-color: rgba(6,182,212,.4); color: #67e8f9; }
+  .key-connector { width: 2px; height: 24px; background: var(--border); }
+  .key-split { display: flex; gap: 3rem; align-items: flex-start; }
+  .key-branch { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .key-op { font-size: .65rem; color: var(--text-muted); background: var(--surface2); padding: .2rem .6rem; border-radius: 4px; border: 1px solid var(--border); margin: .25rem 0; }
+  .ext-layers { display: flex; flex-direction: column; gap: 0; min-width: 800px; }
+  .ext-layer { border: 1px solid; border-radius: 14px; padding: 1.5rem; position: relative; }
+  .ext-layer .layer-label { position: absolute; top: -.6rem; left: 1.5rem; font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; padding: 0 .6rem; }
+  .ext-layer .layer-items { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .ext-layer .layer-item { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: .75rem 1rem; flex: 1; min-width: 180px; }
+  .ext-layer .layer-item .item-name { font-size: .8rem; font-weight: 600; margin-bottom: .3rem; }
+  .ext-layer .layer-item .item-desc { font-size: .68rem; color: var(--text-muted); line-height: 1.4; }
+  .ext-connector-bar { display: flex; align-items: center; justify-content: center; padding: .3rem 0; gap: .5rem; }
+  .ext-connector-bar .ext-pipe { display: flex; flex-direction: column; align-items: center; }
+  .ext-connector-bar .ext-pipe .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .ext-connector-bar .ext-pipe .stick { width: 2px; height: 16px; }
+  .ext-connector-bar .ext-label { font-size: .6rem; padding: .15rem .5rem; border-radius: 3px; border: 1px solid; }
+  .deploy-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; min-width: 800px; }
+  .deploy-full { grid-column: 1 / -1; }
+  .deploy-box { border-radius: 12px; padding: 1.25rem; border: 1px solid; }
+  .deploy-box .d-title { font-weight: 700; font-size: .82rem; margin-bottom: .5rem; display: flex; align-items: center; gap: .4rem; }
+  .deploy-box .d-items { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .deploy-box .d-item { font-size: .7rem; padding: .3rem .7rem; border-radius: 6px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.03); }
+  .deploy-box .d-item .d-name { font-weight: 600; }
+  .deploy-box .d-item .d-info { color: var(--text-muted); font-size: .62rem; }
+  .legend { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+  .legend-item { display: flex; align-items: center; gap: .4rem; font-size: .7rem; color: var(--text-muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+  .flow-arrow { display: inline-block; animation: flowDown 1.5s infinite; color: var(--accent-light); font-size: 1rem; }
+  @keyframes flowDown { 0%,100% { transform: translateY(0); opacity: .5; } 50% { transform: translateY(4px); opacity: 1; } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  section { animation: fadeUp .5s ease-out; }
+  @media (max-width: 768px) { .hero h1 { font-size: 1.8rem; } .page { padding: 70px 1rem 2rem; } .diagram-container { padding: 1.5rem; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">BlackfishID Vault</div>
+    <div class="nav-links">
+      <a href="#arch" class="active">Architecture</a>
+      <a href="#keys">Key Hierarchy</a>
+      <a href="#extension">Extension</a>
+      <a href="#deploy">Deployment</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+
+<div class="hero">
+  <h1>Password Manager</h1>
+  <p>Architecture diagrams for the zero-knowledge password management service</p>
+</div>
+
+<!-- 1. SYSTEM ARCHITECTURE -->
+<section id="arch">
+  <h2><span>System Architecture Overview</span><span class="badge" style="background:rgba(99,102,241,.2);color:var(--accent-light)">System Overview</span></h2>
+  <div class="diagram-container">
+    <div class="diagram-label">ARCHITECTURE</div>
+    <div style="display:flex;flex-direction:column;gap:0;overflow-x:auto;">
+      <div class="arch-grid">
+        <!-- Clients -->
+        <div class="section-box" style="border-color:rgba(99,102,241,.25);background:rgba(99,102,241,.03);">
+          <div class="section-title" style="background:var(--surface);color:var(--accent-light);">Clients</div>
+          <div class="arch-row" style="flex-wrap:wrap;">
+            <div class="arch-box box-accent" style="flex:1;"><div class="title">🧩 Browser Extension</div><div class="subtitle">WXT + React + Manifest V3</div><ul><li>Autofill</li><li>Credential capture</li><li>Password generator</li></ul></div>
+            <div class="arch-box box-accent" style="flex:1;"><div class="title">🌐 Web App</div><div class="subtitle">React SPA</div><ul><li>Vault management</li><li>Dashboard</li><li>Settings</li></ul></div>
+            <div class="arch-box box-accent" style="flex:1;"><div class="title">📱 Mobile App</div><div class="subtitle">React Native</div><ul><li>Biometrics</li><li>Autofill (iOS/Android)</li></ul></div>
+            <div class="arch-box box-accent" style="flex:1;"><div class="title">⌨️ CLI</div><div class="subtitle">Node.js</div><ul><li>Scripting</li><li>CI/CD secrets</li></ul></div>
+          </div>
+          <div style="margin-top:1rem;">
+            <div class="arch-row">
+              <div class="arch-box box-purple" style="flex:1;"><div class="title">🔐 Crypto Engine</div><ul><li>Web Crypto API (AES-256-GCM)</li><li>hash-wasm (Argon2id WASM)</li><li>libsodium.js (X25519)</li></ul></div>
+              <div class="arch-box box-purple" style="flex:1;"><div class="title">💾 Local Cache</div><ul><li>IndexedDB (encrypted vault)</li><li>chrome.storage.session (keys)</li><li>Encrypted SQLite (mobile)</li></ul></div>
+            </div>
+          </div>
+        </div>
+        <div class="connector-down"><div class="pipe" style="height:20px;"></div><div class="tag">HTTPS + TLS 1.3</div><div class="pipe" style="height:20px;"></div></div>
+
+        <!-- Gateway -->
+        <div class="section-box" style="border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.03);">
+          <div class="section-title" style="background:var(--surface);color:var(--orange);">API Gateway</div>
+          <div class="arch-row">
+            <div class="arch-box box-orange" style="flex:1;"><div class="title">🛡️ Rate Limiter</div><div class="subtitle">@nestjs/throttler</div><ul><li>Login: 5 req/min/IP</li><li>API: 100 req/min/user</li></ul></div>
+            <div class="arch-box box-orange" style="flex:1;"><div class="title">🔑 JWT Auth Guard</div><div class="subtitle">@nestjs/jwt + passport</div><ul><li>Access token (15 min)</li><li>Refresh token (7 days)</li></ul></div>
+            <div class="arch-box box-orange" style="flex:1;"><div class="title">🌍 Security Headers</div><div class="subtitle">Helmet + CORS</div><ul><li>IP filtering</li><li>CORS whitelist</li><li>CSP headers</li></ul></div>
+          </div>
+        </div>
+        <div class="connector-down"><div class="pipe" style="height:16px;"></div><span class="flow-arrow">▼</span><div class="pipe" style="height:16px;"></div></div>
+
+        <!-- Backend -->
+        <div class="section-box" style="border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.03);">
+          <div class="section-title" style="background:var(--surface);color:var(--green);">NestJS Backend - Modules</div>
+          <div class="arch-row" style="flex-wrap:wrap;">
+            <div class="arch-box box-green" style="flex:1;min-width:200px;"><div class="title">🔒 AuthModule</div><ul><li>SRP6a Authentication</li><li>Session Management</li><li>JWT Token Service</li><li>Anti-enumeration</li></ul></div>
+            <div class="arch-box box-blue" style="flex:1;min-width:200px;"><div class="title">📦 VaultModule</div><ul><li>CRUD Vaults</li><li>CRUD Items (encrypted blobs)</li><li>Sync Service</li><li>WebSocket Gateway</li></ul></div>
+            <div class="arch-box box-cyan" style="flex:1;min-width:200px;"><div class="title">🤝 SharingModule</div><ul><li>Key Exchange (X25519)</li><li>Team/Org Vaults</li><li>Role Management</li><li>Key Rotation</li></ul></div>
+            <div class="arch-box box-pink" style="flex:1;min-width:200px;"><div class="title">🔢 TwoFactorModule</div><ul><li>TOTP (otplib)</li><li>WebAuthn / FIDO2</li><li>Recovery Codes</li><li>Device Trust</li></ul></div>
+            <div class="arch-box box-teal" style="flex:1;min-width:200px;"><div class="title">🧮 CryptoModule</div><ul><li>libsodium (X25519)</li><li>AES-256-GCM (Node crypto)</li><li>Argon2id (key derivation)</li><li>HKDF (subkeys)</li></ul></div>
+            <div class="arch-box box-muted" style="flex:1;min-width:200px;"><div class="title">📋 CommonModule</div><ul><li>Audit Logging</li><li>Health Checks</li><li>Logger Service</li></ul></div>
+          </div>
+        </div>
+        <div class="connector-down"><div class="pipe" style="height:16px;"></div><span class="flow-arrow">▼</span><div class="pipe" style="height:16px;"></div></div>
+
+        <!-- Data -->
+        <div class="arch-row">
+          <div class="section-box" style="border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.03);flex:1;">
+            <div class="section-title" style="background:var(--surface);color:var(--red);">Data Layer</div>
+            <div class="arch-row">
+              <div class="arch-box box-red" style="flex:1;"><div class="title">🐘 PostgreSQL</div><div class="subtitle">Vault Database (encrypted at-rest)</div><ul><li>users</li><li>vaults + vault_members</li><li>vault_items (encrypted blobs)</li><li>webauthn_credentials</li><li>totp_secrets</li><li>trusted_devices</li><li>audit_logs</li></ul></div>
+              <div class="arch-box box-red" style="flex:1;"><div class="title">⚡ Redis</div><div class="subtitle">Cache + SRP State</div><ul><li>SRP ephemeral (TTL 5 min)</li><li>WebAuthn challenges (TTL 5 min)</li><li>Rate limit counters</li><li>Session cache</li></ul></div>
+            </div>
+          </div>
+          <div class="section-box" style="border-color:rgba(234,179,8,.25);background:rgba(234,179,8,.03);flex:1;">
+            <div class="section-title" style="background:var(--surface);color:var(--yellow);">BlackfishID (Main SaaS)</div>
+            <div class="arch-row">
+              <div class="arch-box box-yellow" style="flex:1;"><div class="title">🏢 Auth Service</div><div class="subtitle">OIDC Provider</div><ul><li>Shared SSO</li><li>User provisioning</li></ul></div>
+              <div class="arch-box box-yellow" style="flex:1;"><div class="title">🔗 Internal API</div><div class="subtitle">mTLS</div><ul><li>Workspace sync</li><li>Org management</li></ul></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent);"></div> Clients</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--orange);"></div> Gateway</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green);"></div> NestJS Backend</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red);"></div> Data Layer</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--yellow);"></div> BlackfishID</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--purple);"></div> Crypto / Storage</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. KEY HIERARCHY -->
+<section id="keys">
+  <h2><span>Key Hierarchy (Zero-Knowledge)</span><span class="badge" style="background:rgba(239,68,68,.2);color:#fca5a5;">CRYPTO</span></h2>
+  <div class="diagram-container">
+    <div class="diagram-label">KEY HIERARCHY</div>
+    <div class="key-flow">
+      <div style="display:flex;gap:3rem;align-items:flex-start;">
+        <div class="key-branch"><div class="key-node key-node-red">🔑 Master Password<div class="sub">Client memory only. NEVER transmitted.</div></div></div>
+        <div style="display:flex;align-items:center;font-size:1.5rem;color:var(--text-muted);padding-top:.7rem;">+</div>
+        <div class="key-branch"><div class="key-node key-node-red">🗝️ Secret Key (128-bit)<div class="sub">Generated at registration. Stored on device only.</div></div></div>
+      </div>
+      <div style="display:flex;gap:6rem;margin-top:.5rem;">
+        <div style="display:flex;flex-direction:column;align-items:center;"><div class="key-connector"></div><div class="key-op">Argon2id (64MiB, t=3)</div><div class="key-connector"></div></div>
+        <div style="display:flex;flex-direction:column;align-items:center;"><div class="key-connector"></div><div class="key-op">HKDF-SHA256 expand</div><div class="key-connector"></div></div>
+      </div>
+      <div class="key-node key-node-yellow" style="min-width:300px;">🔓 Account Unlock Key (AUK)<div class="sub">256-bit = Argon2id(password) XOR HKDF(secretKey)</div></div>
+      <div class="key-connector"></div><div class="key-op">HKDF Key Separation</div><div class="key-connector"></div>
+      <div style="display:flex;gap:3rem;">
+        <div class="key-branch">
+          <div class="key-node key-node-green" style="min-width:220px;">🔐 Encryption Key<div class="sub">AES-256 | info="vault-enc-key-v1"</div></div>
+          <div class="key-connector"></div><div class="key-op">AES-256-GCM decrypt</div><div class="key-connector"></div>
+          <div style="display:flex;gap:1.5rem;">
+            <div class="key-branch">
+              <div class="key-node key-node-blue">🔑 User Symmetric Key<div class="sub">256-bit random</div></div>
+              <div class="key-connector"></div><div class="key-op">unwrap</div><div class="key-connector"></div>
+              <div class="key-node key-node-purple">📦 Vault Key (personal)<div class="sub">256-bit random per vault</div></div>
+            </div>
+            <div class="key-branch">
+              <div class="key-node key-node-blue">🔑 User Private Key<div class="sub">X25519 (32 bytes)</div></div>
+              <div class="key-connector"></div><div class="key-op">crypto_box_open</div><div class="key-connector"></div>
+              <div class="key-node key-node-purple">📦 Vault Key (shared)<div class="sub">Encrypted with recipient's pub key</div></div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:center;margin-top:.5rem;">
+            <div class="key-branch">
+              <div class="key-connector"></div><div class="key-op">unwrap item keys</div><div class="key-connector"></div>
+              <div class="key-node key-node-cyan">📄 Item Keys (per item)<div class="sub">AES-256-GCM -> decrypts login/card/note</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="key-branch">
+          <div class="key-node key-node-green" style="min-width:220px;">✅ Auth Key<div class="sub">HMAC-SHA256 | info="vault-auth-key-v1"</div></div>
+          <div class="key-connector"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <div class="key-op">SRP authentication</div><div class="key-connector"></div>
+            <div class="key-node box-muted" style="border-radius:10px;padding:.6rem 1rem;font-size:.75rem;min-width:180px;text-align:center;border:1px solid var(--border);">Verifies identity<br/>without revealing password</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="legend" style="margin-top:2rem;">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red);"></div> Client-only (NEVER leaves)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--yellow);"></div> Derived on client</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green);"></div> Subkeys (HKDF)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue);"></div> Encrypted on server</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--purple);"></div> Per-vault (encrypted)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--cyan);"></div> Per-item (encrypted)</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. BROWSER EXTENSION -->
+<section id="extension">
+  <h2><span>Browser Extension - 3-Layer Architecture</span><span class="badge" style="background:rgba(168,85,247,.2);color:var(--purple);">EXTENSION</span></h2>
+  <div class="diagram-container">
+    <div class="diagram-label">MANIFEST V3</div>
+    <div class="ext-layers">
+      <!-- Layer 1: Content Scripts -->
+      <div class="ext-layer" style="border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.03);">
+        <div class="layer-label" style="background:var(--surface);color:var(--blue);">Content Scripts (Isolated World - each web page)</div>
+        <div class="layer-items">
+          <div class="ext-layer layer-item"><div class="item-name" style="color:var(--blue);">🔍 FormDetector</div><div class="item-desc">querySelectorAll + MutationObserver<br/>Detects input[type=password], autocomplete="username"<br/>Shadow DOM traversal + iFrame support</div></div>
+          <div class="ext-layer layer-item"><div class="item-name" style="color:var(--blue);">✏️ AutofillEngine</div><div class="item-desc">Click → Focus → Native setter → Input/Change events<br/>Compatible with React/Angular/Vue controlled components<br/>Multi-field (username + password + TOTP)</div></div>
+          <div class="ext-layer layer-item"><div class="item-name" style="color:var(--blue);">💾 CredentialCapture</div><div class="item-desc">submit event (capture phase)<br/>XHR/fetch intercept (AJAX logins)<br/>beforeunload + pushState (SPAs)</div></div>
+          <div class="ext-layer layer-item"><div class="item-name" style="color:var(--blue);">💬 Shadow DOM UI</div><div class="item-desc">NotificationBar (save prompt)<br/>InlineGenerator (password generator dropdown)<br/>Credential picker popup</div></div>
+        </div>
+      </div>
+      <div class="ext-connector-bar">
+        <div class="ext-pipe"><div class="dot" style="background:var(--blue);"></div><div class="stick" style="background:linear-gradient(var(--blue),var(--green));"></div><div class="dot" style="background:var(--green);"></div></div>
+        <div class="ext-label" style="border-color:rgba(34,197,94,.3);color:var(--green);background:rgba(34,197,94,.08);">chrome.runtime.sendMessage() — validated sender.id</div>
+        <div class="ext-pipe"><div class="dot" style="background:var(--green);"></div><div class="stick" style="background:linear-gradient(var(--green),var(--blue));"></div><div class="dot" style="background:var(--blue);"></div></div>
+      </div>
+      <!-- Layer 2: Service Worker -->
+      <div class="ext-layer" style="border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.03);">
+        <div class="layer-label" style="background:var(--surface);color:var(--green);">Service Worker (Background - central coordinator)</div>
+        <div class="layer-items">
+          <div class="ext-layer layer-item"><div class="item-name" style="color:var(--green);">🧮 Crypto Operations</div><div class="item-desc">Argon2id (WASM via hash-wasm)<br/>AES-256-GCM (Web Crypto API)<br/>X25519 (libsodium.js)<br/><strong>All crypto operations happen here</strong></div></div>
+          <div class="ext-layer layer-item"><div class="item-name" style="color:var(--green);">🔒 Session State</div><div class="item-desc">chrome.storage.session (vault key in memory)<br/>chrome.alarms (auto-lock check every 1 min)<br/>chrome.idle (lock on system lock)<br/>Auto-lock timeout: 15 min default</div></div>
+          <div class="ext-layer layer-item"><div class="item-name" style="color:var(--green);">🌐 API Client</div><div class="item-desc">JWT management (access + refresh)<br/>Automatic token refresh on 401<br/>Request queue during refresh<br/>WebSocket sync client</div></div>
+          <div class="ext-layer layer-item"><div class="item-name" style="color:var(--green);">🎲 Password Generator</div><div class="item-desc">crypto.getRandomValues (CSPRNG)<br/>Configurable: length, charset, symbols<br/>Passphrase mode (EFF wordlist)</div></div>
+        </div>
+      </div>
+      <div class="ext-connector-bar">
+        <div class="ext-pipe"><div class="dot" style="background:var(--green);"></div><div class="stick" style="background:linear-gradient(var(--green),var(--purple));"></div><div class="dot" style="background:var(--purple);"></div></div>
+        <div class="ext-label" style="border-color:rgba(168,85,247,.3);color:var(--purple);background:rgba(168,85,247,.08);">chrome.runtime.sendMessage() — popup ↔ service worker</div>
+        <div class="ext-pipe"><div class="dot" style="background:var(--purple);"></div><div class="stick" style="background:linear-gradient(var(--purple),var(--green));"></div><div class="dot" style="background:var(--green);"></div></div>
+      </div>
+      <!-- Layer 3: Popup -->
+      <div class="ext-layer" style="border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.03);">
+        <div class="layer-label" style="background:var(--surface);color:var(--purple);">Popup / Side Panel (User UI)</div>
+        <div class="layer-items">
+          <div class="ext-layer layer-item"><div class="item-name" style="color:var(--purple);">🔓 Lock Screen</div><div class="item-desc">Master password input<br/>Biometric unlock (if available)<br/>Loading state (Argon2id ~500ms)</div></div>
+          <div class="ext-layer layer-item"><div class="item-name" style="color:var(--purple);">📂 Vault Browser</div><div class="item-desc">Vault and item list<br/>Fuzzy search<br/>Type filters</div></div>
+          <div class="ext-layer layer-item"><div class="item-name" style="color:var(--purple);">🎲 Generator UI</div><div class="item-desc">Length slider (8-64)<br/>Checkboxes: A-Z, a-z, 0-9, !@#<br/>Copy to clipboard</div></div>
+          <div class="ext-layer layer-item"><div class="item-name" style="color:var(--purple);">⚙️ Settings</div><div class="item-desc">Auto-lock timeout<br/>Default vault<br/>Trusted devices<br/>2FA configuration</div></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:1.5rem;display:flex;justify-content:center;">
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <div style="width:60px;height:2px;background:linear-gradient(to right,transparent,var(--orange));"></div>
+        <div style="font-size:.7rem;color:var(--orange);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);padding:.3rem 1rem;border-radius:6px;">HTTPS → NestJS Backend API</div>
+        <div style="width:60px;height:2px;background:linear-gradient(to left,transparent,var(--orange));"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. DEPLOYMENT -->
+<section id="deploy">
+  <h2><span>Deployment Architecture</span><span class="badge" style="background:rgba(6,182,212,.2);color:var(--cyan);">DEPLOY</span></h2>
+  <div class="diagram-container">
+    <div class="diagram-label">INFRASTRUCTURE</div>
+    <div class="deploy-grid">
+      <div class="deploy-box box-muted deploy-full"><div class="d-title">🌍 Internet</div><div class="d-items"><div class="d-item"><div class="d-name">Users</div><div class="d-info">Extension + Web App + Mobile</div></div><div class="d-item"><div class="d-name">CDN (CloudFlare)</div><div class="d-info">Web App static + Extension Store</div></div></div></div>
+      <div class="deploy-box box-orange deploy-full"><div class="d-title">⚖️ Load Balancer</div><div class="d-items"><div class="d-item"><div class="d-name">Nginx / Traefik</div><div class="d-info">TLS 1.3 termination</div></div><div class="d-item"><div class="d-name">Rate Limiting L7</div><div class="d-info">DDoS protection</div></div><div class="d-item"><div class="d-name">WebSocket proxy</div><div class="d-info">Sticky sessions</div></div></div></div>
+      <div class="deploy-box box-green"><div class="d-title">🔐 Password Manager Pods</div><div class="d-items" style="flex-direction:column;"><div class="d-item"><div class="d-name">PM Instance 1</div><div class="d-info">NestJS | 512MB RAM</div></div><div class="d-item"><div class="d-name">PM Instance 2</div><div class="d-info">NestJS | 512MB RAM</div></div><div class="d-item"><div class="d-name">PM Instance N</div><div class="d-info">Auto-scaling HPA</div></div></div></div>
+      <div class="deploy-box box-yellow"><div class="d-title">🏢 BlackfishID Pods</div><div class="d-items" style="flex-direction:column;"><div class="d-item"><div class="d-name">BF Instance 1</div><div class="d-info">Main API</div></div><div class="d-item"><div class="d-name">BF Instance N</div><div class="d-info">Auto-scaling</div></div></div><div style="margin-top:.5rem;font-size:.65rem;color:var(--yellow);">Communication: mTLS internal</div></div>
+      <div class="deploy-box box-red"><div class="d-title">💾 Data Layer</div><div class="d-items" style="flex-direction:column;"><div class="d-item"><div class="d-name">🐘 PostgreSQL (PM)</div><div class="d-info">Vaults DB | Encrypted at-rest | WAL archiving</div></div><div class="d-item"><div class="d-name">🐘 PostgreSQL (BF)</div><div class="d-info">Main DB | Physically separated</div></div><div class="d-item"><div class="d-name">⚡ Redis Cluster</div><div class="d-info">SRP state | Sessions | Cache | Pub/Sub</div></div></div></div>
+      <div class="deploy-box box-purple deploy-full"><div class="d-title">💾 Backup & DR</div><div class="d-items"><div class="d-item"><div class="d-name">DB Snapshots</div><div class="d-info">Daily, encrypted, 90-day retention</div></div><div class="d-item"><div class="d-name">WAL Archiving</div><div class="d-info">Point-in-time recovery (PITR)</div></div><div class="d-item"><div class="d-name">Geo-replication</div><div class="d-info">Cross-region DR (optional)</div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. ZERO KNOWLEDGE -->
+<section>
+  <h2><span>What the Server Sees vs What the Client Sees</span><span class="badge" style="background:rgba(34,197,94,.2);color:var(--green);">ZERO-KNOWLEDGE</span></h2>
+  <div class="diagram-container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;min-width:700px;">
+      <div>
+        <h3 style="font-size:.85rem;color:var(--red);margin-bottom:1rem;display:flex;align-items:center;gap:.4rem;"><span style="font-size:1.2rem;">🖥️</span> Server (encrypted blobs only)</h3>
+        <div style="display:flex;flex-direction:column;gap:.5rem;">
+          <div style="padding:.6rem 1rem;border-radius:8px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);font-size:.75rem;"><div style="font-weight:600;color:#fca5a5;">SRP Verifier</div><div style="color:var(--text-muted);">Not reversible to password</div></div>
+          <div style="padding:.6rem 1rem;border-radius:8px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);font-size:.75rem;"><div style="font-weight:600;color:#fca5a5;">Encrypted Private Key</div><div style="color:var(--text-muted);">AES-256-GCM blob — unreadable</div></div>
+          <div style="padding:.6rem 1rem;border-radius:8px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);font-size:.75rem;"><div style="font-weight:600;color:#fca5a5;">Encrypted Vault Keys</div><div style="color:var(--text-muted);">Encrypted with user's pub key</div></div>
+          <div style="padding:.6rem 1rem;border-radius:8px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);font-size:.75rem;"><div style="font-weight:600;color:#fca5a5;">Encrypted Items</div><div style="color:var(--text-muted);">Opaque blobs — server cannot read contents</div></div>
+          <div style="padding:.6rem 1rem;border-radius:8px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);font-size:.75rem;"><div style="font-weight:600;color:#86efac;">Public Key (plaintext)</div><div style="color:var(--text-muted);">Safe to share — compromises nothing</div></div>
+          <div style="padding:.6rem 1rem;border-radius:8px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);font-size:.75rem;"><div style="font-weight:600;color:#86efac;">Salts + KDF Params</div><div style="color:var(--text-muted);">Public by design — no compromise</div></div>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size:.85rem;color:var(--green);margin-bottom:1rem;display:flex;align-items:center;gap:.4rem;"><span style="font-size:1.2rem;">💻</span> Client (everything in plaintext, in memory)</h3>
+        <div style="display:flex;flex-direction:column;gap:.5rem;">
+          <div style="padding:.6rem 1rem;border-radius:8px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);font-size:.75rem;"><div style="font-weight:600;color:#86efac;">Master Password</div><div style="color:var(--text-muted);">Memory only, cleared after KDF</div></div>
+          <div style="padding:.6rem 1rem;border-radius:8px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);font-size:.75rem;"><div style="font-weight:600;color:#86efac;">Secret Key (128-bit)</div><div style="color:var(--text-muted);">Device only, never on server</div></div>
+          <div style="padding:.6rem 1rem;border-radius:8px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);font-size:.75rem;"><div style="font-weight:600;color:#86efac;">Encryption Key + Auth Key</div><div style="color:var(--text-muted);">Derived, in memory (chrome.storage.session)</div></div>
+          <div style="padding:.6rem 1rem;border-radius:8px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);font-size:.75rem;"><div style="font-weight:600;color:#86efac;">Vault Keys (decrypted)</div><div style="color:var(--text-muted);">In memory, auto-lock 15 min</div></div>
+          <div style="padding:.6rem 1rem;border-radius:8px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);font-size:.75rem;"><div style="font-weight:600;color:#86efac;">Plaintext Passwords</div><div style="color:var(--text-muted);">Decrypted on-demand, cleared after use</div></div>
+          <div style="padding:.6rem 1rem;border-radius:8px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);font-size:.75rem;"><div style="font-weight:600;color:#86efac;">Private Key (decrypted)</div><div style="color:var(--text-muted);">For vault sharing (crypto_box)</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.querySelectorAll('nav a').forEach(link=>{link.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(link.getAttribute('href'));if(t){t.scrollIntoView({behavior:'smooth',block:'start'});document.querySelectorAll('nav a').forEach(l=>l.classList.remove('active'));link.classList.add('active');}});});
+const sections=document.querySelectorAll('section[id]');
+window.addEventListener('scroll',()=>{let c='';sections.forEach(s=>{if(window.scrollY>=s.offsetTop-100)c=s.id;});document.querySelectorAll('nav a').forEach(l=>{l.classList.toggle('active',l.getAttribute('href')==='#'+c);});});
+</script>
+</body>
+</html>
